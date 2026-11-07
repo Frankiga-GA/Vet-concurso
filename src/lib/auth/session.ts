@@ -3,7 +3,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export async function requireUser() {
+export async function requireUser(explainMissingSession = false) {
   let supabase;
   try {
     supabase = await createSupabaseServerClient();
@@ -11,15 +11,27 @@ export async function requireUser() {
     redirect("/auth/login?error=unconfigured");
   }
   const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) redirect("/auth/login");
+  if (error || !user) redirect(explainMissingSession ? "/auth/login?error=session-required" : "/auth/login");
   if (!user.email_confirmed_at) redirect("/auth/check-email");
   return { supabase, user };
 }
 
-export async function requirePlatformAdmin() {
-  const { supabase, user } = await requireUser();
+export async function requirePlatformAdminRole() {
+  const { supabase, user } = await requireUser(true);
   const { data: isAdmin, error } = await supabase.rpc("vetia_is_platform_admin");
-  if (error || !isAdmin) redirect("/account");
-  const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  return { supabase, user, isAdmin: true, aal2: assurance?.currentLevel === "aal2" };
+  if (error) redirect("/admin/access?reason=unavailable");
+  if (isAdmin !== true) redirect("/admin/access");
+  return { supabase, user };
+}
+
+export async function hasPlatformAdminAal2(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>) {
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || !data?.claims) redirect("/auth/login?error=session-required");
+  return data.claims.aal === "aal2";
+}
+
+export async function requirePlatformAdminAal2() {
+  const session = await requirePlatformAdminRole();
+  if (!(await hasPlatformAdminAal2(session.supabase))) redirect("/admin/mfa");
+  return session;
 }

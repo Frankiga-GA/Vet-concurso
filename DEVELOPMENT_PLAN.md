@@ -4,13 +4,14 @@
 **Fuente técnica:** `ARCHITECTURE.md`.  
 **Objetivo actual:** Implementar únicamente Fase 1, fundamentos y seguridad. No construir aún directorio, citas, IA ni experiencia completa de clínica.
 
-## Estado de auditoría inicial
+## Estado de infraestructura (revisión 2026-11-06)
 
-- Workspace `D:\concurso` estaba vacío; no había código funcional/documentos que reemplazar ni repositorio Git inicializado.
-- Node.js 24, npm y pnpm están disponibles.
-- No se detectaron variables de entorno por nombre para Supabase, Postgres o Vercel. No se imprimieron valores.
-- Docker y Supabase CLI global no están disponibles; las pruebas locales de migración necesitan instalar/ejecutar CLI y Docker o configurar un proyecto remoto de desarrollo.
-- No se ha ejecutado migración ni existe confirmación de proyecto Supabase configurado.
+- El repositorio está en `main`, con `origin` en el GitHub oficial; `git fetch` confirma sincronización exacta (`0` commits adelante y `0` atrás).
+- Node.js 24, npm y pnpm están disponibles. Supabase CLI 3.0.0 está instalada como dependencia del proyecto y se ejecuta mediante `pnpm exec supabase`.
+- `.env.local` existe y `git check-ignore` confirma que no se versiona. Se comprobó presencia de nombres de variables sin leer ni imprimir valores. Los literales de claves secretas no aparecen en los archivos versionados.
+- La URL Supabase Cloud más la clave publishable respondieron HTTP 200 en Auth Settings; PostgreSQL no fue verificado.
+- No hay sesión CLI (`SUPABASE_ACCESS_TOKEN`) ni enlace remoto local configurado. Falta iniciar sesión/enlazar proyecto (y contraseña DB cuando la CLI la solicite); por ello no se consultó historial remoto ni se simuló el diff remoto.
+- La migración inicial está en `supabase/migrations/20261106010000_phase1_foundation.sql`; no se aplicó al remoto ni se ejecutó un reset remoto.
 - La conexión al esquema privado quedó resuelta mediante RPC estrechas con sesión; `private` no se expone ni se conecta desde runtime con SQL privilegiado.
 
 ## Fase 0 — decisiones previas (documentada)
@@ -28,10 +29,10 @@
 Preparar Next.js modular, Auth por correo, sesiones protegidas, perfiles/roles/membresías, base inicial segura, RLS/grants, MFA superadmin y pruebas de aislamiento. Evitar funciones de fases posteriores.
 
 ### Dependencias/configuración
-- Supabase URL y publishable key para desarrollo.
-- Proyecto Supabase aislado de producción o Supabase local (Docker + CLI).
+- Supabase Cloud de desarrollo configurado en `.env.local` (URL y publishable key). La clave secreta permanece solo en servidor y no se usa como token CLI.
+- Proyecto Supabase Cloud de desarrollo (preferido para este piloto) o Supabase local (Docker + CLI).
 - SMTP/Auth URL/redirects configurados para confirmación y recuperación.
-- Configuración Supabase para Auth/Data API y ejecución de migraciones locales o remotas.
+- Configuración Supabase para Auth/Data API y ejecución de migraciones. Para Cloud, falta autenticación CLI, enlace remoto y verificación del historial antes de cualquier migración.
 - Cuenta bootstrap superadmin y enrolamiento TOTP/AAL2.
 - Vercel opcional hasta confirmar despliegue; no desplegar producción sin credenciales y configuración.
 
@@ -48,11 +49,11 @@ Preparar Next.js modular, Auth por correo, sesiones protegidas, perfiles/roles/m
 - [x] Auditoría inicial de workspace/runtime/Git/variables por nombre.
 - [x] PRD y arquitectura creados desde especificación aprobada (no existían).
 - [x] Scaffold Next.js/TypeScript/Tailwind.
-- [x] Supabase CLI local y configuración de migraciones.
+- [x] Supabase CLI del proyecto y configuración de migraciones locales.
 - [x] Migración inicial, grants/RLS y pruebas pgTAP escritas.
 - [x] Auth y páginas protegidas implementadas.
 - [x] Bootstrap superadmin y MFA/TOTP/AAL2 implementados/documentados.
-- [ ] Pruebas de seguridad contra PostgreSQL y Auth real (bloqueadas por falta de Docker/proyecto/credenciales).
+- [ ] Pruebas de seguridad contra PostgreSQL y Auth real (bloqueadas hasta enlazar/autenticar CLI y tener acceso al proyecto de desarrollo; no se aplicó ninguna migración remota).
 - [x] TypeScript, lint, pruebas unitarias locales y build.
 
 ### Verificación ejecutada en este workspace

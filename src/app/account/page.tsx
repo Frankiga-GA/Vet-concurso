@@ -20,7 +20,14 @@ export default async function AccountPage() {
       <p className="text-sm font-semibold uppercase tracking-widest text-emerald-800">Cuenta del propietario</p>
       <h1 className="mt-3 text-3xl font-semibold">Sesión iniciada</h1>
       <p className="mt-3 text-slate-600">Correo: {user.email ?? "sin correo"}</p>
-      <p className="mt-6 text-sm leading-6 text-slate-500">El resto del espacio de propietario se habilitará en las siguientes fases del plan.</p>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Link href="/account/pets" className="rounded-full bg-emerald-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900">
+          Mis mascotas
+        </Link>
+        <Link href="/account/clinic-applications" className="rounded-full border border-emerald-800 px-5 py-2.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-50">
+          Registrar mi veterinaria
+        </Link>
+      </div>
     </section>
   </main>;
 }

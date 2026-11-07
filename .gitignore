@@ -7,3 +7,4 @@ coverage/
 *.tsbuildinfo
 supabase/.temp/
 *.log
+supabase/.branches/

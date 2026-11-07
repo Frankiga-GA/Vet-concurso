@@ -6,9 +6,10 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen px-5 py-8 sm:px-10">
-      <header className="mx-auto flex max-w-6xl items-center justify-between">
+      <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
         <Link className="text-2xl font-bold tracking-tight text-[var(--green)]" href="/">VetIA</Link>
-        <nav className="flex gap-5 text-sm font-medium">
+        <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+          <Link href="/veterinarias">Veterinarias</Link>
           <Link href="/auth/login">Ingresar</Link>
           <Link href="/auth/register">Crear cuenta</Link>
         </nav>
@@ -20,6 +21,7 @@ export default function HomePage() {
           <h1 className="max-w-2xl text-5xl font-semibold leading-[1.06] tracking-tight sm:text-6xl">Cuidar mejor empieza con saber a dónde acudir.</h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-[var(--muted)]">VetIA reúne orientación inicial y veterinarias asociadas de Chincha, Pisco e Ica.</p>
           <div className="mt-8 flex flex-wrap gap-3">
+            <Link className="rounded-full border border-emerald-900/20 bg-white px-6 py-3 font-semibold" href="/veterinarias">Buscar veterinaria</Link>
             <Link className="rounded-full bg-[var(--green)] px-6 py-3 font-semibold text-white" href="/auth/register">Crear cuenta</Link>
             <Link className="rounded-full border border-emerald-900/20 bg-white px-6 py-3 font-semibold" href="/auth/login">Iniciar sesión</Link>
           </div>

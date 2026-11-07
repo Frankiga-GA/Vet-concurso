@@ -2,7 +2,8 @@
 
 **Versión:** Consolidación aprobada para implementar Fase 1.  
 **Fuente funcional:** `VETIA_PRD.md` v1.0.  
-**Estado del repositorio a la auditoría inicial:** vacío, sin Git inicializado, sin archivos existentes que conservar. Node.js 24 y pnpm disponibles; Docker y Supabase CLI global no disponibles. No se detectaron nombres de variables Supabase/DB/Vercel en el entorno inspeccionado. No se imprimieron valores secretos.
+**Estado inicial:** el workspace estaba vacío antes de construir esta base.
+**Revisión de infraestructura (2026-11-06):** Git `main` sincronizada con `origin/main`; `.env.local` existe y está excluido de Git. `pnpm exec supabase --version` devuelve 3.0.0. La URL Supabase Cloud y la clave publishable alcanzan Auth (HTTP 200), pero no se verificó PostgreSQL. La CLI no tiene sesión (`SUPABASE_ACCESS_TOKEN` ausente), por lo que el proyecto no está enlazado desde CLI y no se consultó ni modificó el historial remoto. No hay literales de claves secretas en archivos versionados. Nunca se muestran valores de entorno en este documento.
 
 ## 1. Stack
 
@@ -157,7 +158,7 @@ supabase/migrations/, tests/, config.toml
 
 ## 10. Variables de entorno por nombre (sin valores)
 
-Browser: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. No se necesita `DATABASE_URL` para runtime; privado se opera por RPCs estrechas con sesión. Auth Admin podrá usar `SUPABASE_SECRET_KEY` solo al implementar invitaciones, desde backend aislado. CLI migraciones: `SUPABASE_ACCESS_TOKEN`/`SUPABASE_DB_PASSWORD` solo en entorno seguro, no `.env` versionado. No se detectaron variables de estos nombres en auditoría; `.env.example` contiene placeholders.
+Browser: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. No se necesita `DATABASE_URL` para runtime; privado se opera por RPCs estrechas con sesión. Auth Admin podrá usar `SUPABASE_SECRET_KEY` solo al implementar invitaciones, desde backend aislado. Para Supabase Cloud, ejecutar `pnpm exec supabase login`, luego `pnpm exec supabase link --project-ref <project-ref>` y proveer la contraseña DB cuando se solicite. `SUPABASE_ACCESS_TOKEN`/`SUPABASE_DB_PASSWORD` deben mantenerse en un entorno seguro, nunca en archivos versionados. En la revisión del 2026-11-06 faltan token de acceso y contraseña DB; no se pudieron enlazar ni comparar migraciones remotas. La clave secreta Supabase no sustituye el token CLI ni la contraseña DB.
 
 ## 11. Pruebas de Fase 1
 

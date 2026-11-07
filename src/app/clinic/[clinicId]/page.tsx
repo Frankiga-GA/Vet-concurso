@@ -16,6 +16,7 @@ export default async function ClinicHomePage({ params }: { params: Promise<{ cli
       <p className="text-sm font-bold uppercase tracking-widest text-emerald-800">Panel de clínica · Fase 1</p>
       <h1 className="mt-3 text-3xl font-semibold">Acceso verificado</h1>
       <p className="mt-3 text-slate-600">Rol: {membership.role === "clinic_admin" ? "administrador" : "personal"}</p>
+      <Link href={`/clinic/${clinicId}/appointments`} className="mt-4 inline-flex rounded-xl bg-emerald-800 px-4 py-2 font-semibold text-white">Solicitudes de cita</Link>
       <p className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">La sesión solo puede consultar registros asociados a esta clínica. La gestión de clientes, mascotas, citas e incorporación se habilitará en sus fases.</p>
       {error ? <p role="status" className="mt-4 text-sm text-amber-800">No se pudo consultar el resumen en este momento.</p> : <p className="mt-4 text-sm text-slate-600">Fichas locales de clientes: {count ?? 0}</p>}
     </section>

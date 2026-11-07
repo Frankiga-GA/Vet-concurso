@@ -31,6 +31,7 @@ export function AuthMessage({ code }: { code?: string }) {
     signup: "No se pudo completar el registro. Verifica la configuración e inténtalo de nuevo.",
     credentials: "No se pudo iniciar sesión. Revisa tus credenciales y confirma tu correo.",
     unavailable: "No se pudo consultar el acceso de esta cuenta. Inténtalo nuevamente.",
+    "session-required": "Tu sesión no está disponible o ha caducado. Inicia sesión para continuar.",
     expired: "El enlace expiró o ya fue utilizado. Solicita uno nuevo.",
     callback: "No se pudo validar el enlace. Solicita uno nuevo.",
   };
