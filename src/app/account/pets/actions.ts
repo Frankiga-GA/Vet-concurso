@@ -38,6 +38,15 @@ export async function saveOwner(formData: FormData): Promise<PetFormResult> {
 }
 
 export async function createPet(formData: FormData): Promise<PetFormResult> {
+  return savePet(formData);
+}
+
+export async function updatePet(petId: string, formData: FormData): Promise<PetFormResult> {
+  if (!z.uuid().safeParse(petId).success) return { status: "error", message: "No se encontró la mascota." };
+  return savePet(formData, petId);
+}
+
+async function savePet(formData: FormData, petId?: string): Promise<PetFormResult> {
   const { supabase } = await requireUser();
   const parsed = petSchema.safeParse({
     name: formData.get("name") ?? "",
@@ -49,19 +58,24 @@ export async function createPet(formData: FormData): Promise<PetFormResult> {
   if (!parsed.success) return { status: "error", message: parsed.error.issues[0].message };
 
   const { name, species, breed, sex, birthDate } = parsed.data;
-  const { error } = await supabase.rpc("vetia_create_my_pet", {
+  const fields = {
     p_name: name,
     p_species: species,
     p_breed: breed || null,
     p_sex: sex || null,
     p_birth_date: birthDate || null,
-  });
+  };
+  const { error } = petId
+    ? await supabase.rpc("vetia_update_my_pet", { p_pet_id: petId, ...fields })
+    : await supabase.rpc("vetia_create_my_pet", fields);
   if (error?.code === "23503" && error.message === "Owner profile required") {
     return { status: "error", message: "Guarda primero tu perfil de propietario y vuelve a registrar la mascota." };
   }
   if (error) {
-    return { status: "error", message: "No pudimos confirmar el registro. Revisa tu lista antes de volver a enviarlo." };
+    return { status: "error", message: error.code === "PT404" ? "No se encontró la mascota."
+      : "No pudimos confirmar el guardado. Revisa tu lista antes de volver a enviarlo." };
   }
   revalidatePath("/account/pets");
-  return { status: "success", message: "Mascota registrada." };
+  if (petId) revalidatePath(`/account/pets/${petId}`);
+  return { status: "success", message: petId ? "Ficha actualizada." : "Mascota registrada." };
 }

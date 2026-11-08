@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireClinicMembership } from "@/lib/auth/clinic";
 import { parseLimaTime, type AppointmentResult } from "@/features/appointments/contract";
@@ -23,12 +24,15 @@ export async function confirmAppointment(_previous: AppointmentResult, form: For
     });
     if (error?.code === "PT409") return { message: "La cita ya fue confirmada con otro horario. Recarga la bandeja." };
     if (error?.code === "42501" || error?.code === "P0002") return { message: "Esta solicitud ya no está disponible para tu cuenta." };
-    if (!error && z.uuid().safeParse(reference).success) {
-      revalidatePath(`/clinic/${clinicId}/appointments`);
-      return { message: "Cita confirmada.", reference };
-    }
+    if (error || !z.uuid().safeParse(reference).success) return uncertainConfirmation();
   } catch {
-    // The clinic can check the refreshed inbox or repeat the same agreed time.
+    return uncertainConfirmation();
   }
+  const inbox = `/clinic/${clinicId}/appointments`;
+  revalidatePath(inbox);
+  redirect(`${inbox}?estado=confirmed`);
+}
+
+function uncertainConfirmation(): AppointmentResult {
   return { message: "No pudimos comprobar la confirmación. Recarga la bandeja antes de intentarlo de nuevo." };
 }

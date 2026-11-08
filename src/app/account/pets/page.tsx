@@ -1,21 +1,12 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { z } from "zod";
 import { logoutAction } from "@/app/auth/actions";
 import { OwnerForm, PetForm } from "@/features/pets/pet-forms";
 import { requireUser } from "@/lib/auth/session";
 import { Notice, PageIntro } from "@/components/vetia-ui";
+import { ownerProfileSchema, petListSchema } from "@/features/pets/contract";
 
 export const dynamic = "force-dynamic";
-
-const petListSchema = z.array(z.object({
-  id: z.string(),
-  name: z.string(),
-  species: z.string(),
-  breed: z.string().nullable(),
-  sex: z.string().nullable(),
-  birth_date: z.iso.date().nullable(),
-}));
 
 const birthDateFormatter = new Intl.DateTimeFormat("es-PE", {
   dateStyle: "medium",
@@ -38,8 +29,16 @@ async function PetList({ supabase }: { supabase: Awaited<ReturnType<typeof requi
               {pet.sex && <div><dt className="inline font-medium">Sexo: </dt><dd className="inline">{pet.sex}</dd></div>}
               {pet.birth_date && <div><dt className="inline font-medium">Nacimiento: </dt><dd className="inline"><time dateTime={pet.birth_date}>{birthDateFormatter.format(new Date(pet.birth_date))}</time></dd></div>}
             </dl>
+            <Link href={`/account/pets/${pet.id}`} className="vet-link inline-flex min-h-11 items-center" aria-label={`Editar a ${pet.name}`}>Editar ficha</Link>
           </li>)}
         </ul>;
+}
+
+async function OwnerProfile({ supabase }: { supabase: Awaited<ReturnType<typeof requireUser>>["supabase"] }) {
+  const { data, error } = await supabase.rpc("vetia_my_owner_profile").maybeSingle();
+  const profile = ownerProfileSchema.nullable().safeParse(data);
+  if (error || !profile.success) return <Notice tone="danger" role="alert">No pudimos cargar tu perfil. Recarga la página antes de editarlo.</Notice>;
+  return <OwnerForm fullName={profile.data?.full_name} phone={profile.data?.phone ?? undefined} />;
 }
 
 export default async function PetsPage() {
@@ -64,7 +63,9 @@ export default async function PetsPage() {
       <section aria-labelledby="owner-profile" className="vet-card">
         <h2 id="owner-profile" className="text-xl font-semibold">Perfil de propietario</h2>
         <p className="mt-2 text-sm text-slate-600">Guarda tu perfil antes de registrar tu primera mascota. Si actualizas el perfil con el teléfono en blanco, se eliminará el teléfono guardado.</p>
-        <OwnerForm />
+        <Suspense fallback={<p role="status" className="vet-muted mt-3">Cargando perfil…</p>}>
+          <OwnerProfile supabase={supabase} />
+        </Suspense>
       </section>
       <section aria-labelledby="new-pet" className="vet-card">
         <h2 id="new-pet" className="text-xl font-semibold">Registrar una mascota</h2>

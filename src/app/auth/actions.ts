@@ -47,9 +47,7 @@ export async function loginAction(formData: FormData) {
     const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     redirect(assurance?.currentLevel === "aal2" ? "/admin" : "/admin/mfa");
   }
-  const { data: memberships } = await supabase.from("clinic_memberships")
-    .select("clinic_id").eq("user_id", signIn.user.id)
-    .eq("status", "active").limit(1);
+  const { data: memberships } = await supabase.rpc("vetia_my_operational_clinics", { p_clinic_id: null }).limit(1);
   if (memberships?.length) redirect("/clinic");
   redirect("/account");
 }

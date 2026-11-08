@@ -22,7 +22,7 @@ export default async function ClinicHomePage({ params }: { params: Promise<{ cli
   const { supabase, membership } = await requireClinicMembership(clinicId);
   return <main className="vet-shell vet-page space-y-4">
     <header className="flex flex-wrap items-start justify-between gap-2">
-      <PageIntro title="Panel de clínica" label={membership.role === "clinic_admin" ? "Administración de clínica" : "Personal de clínica"} />
+      <PageIntro title={membership.name} label={membership.role === "clinic_admin" ? "Administración de clínica" : "Personal de clínica"} />
       <form action={logoutAction}><button className="vet-button vet-button-secondary">Cerrar sesión</button></form>
     </header>
     <ClinicNav clinicId={clinicId} current="overview" profile={membership.role === "clinic_admin"} />

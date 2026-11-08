@@ -12,7 +12,7 @@ export function ConfirmationForm({ clinicId, appointmentId }: { clinicId: string
     <form action={action} className="mt-3 space-y-3" aria-busy={pending}>
       <input type="hidden" name="clinicId" value={clinicId} />
       <input type="hidden" name="appointmentId" value={appointmentId} />
-      <fieldset disabled={pending || Boolean(state.reference)} className="min-w-0 space-y-3">
+      <fieldset disabled={pending} className="min-w-0 space-y-3">
         <label className="block text-sm font-medium">Fecha y hora acordadas (hora de Perú)
           <input className="vet-field" name="agreed" type="datetime-local" required value={agreed} onChange={(event) => setAgreed(event.target.value)} />
         </label>
@@ -24,7 +24,7 @@ export function ConfirmationForm({ clinicId, appointmentId }: { clinicId: string
           {pending ? "Confirmando…" : "Confirmar cita"}
         </button>
       </fieldset>
-      {state.message && <p role={state.reference ? "status" : "alert"} className={`vet-notice text-sm ${state.reference ? "vet-notice-info" : "vet-notice-danger"}`}>{state.message}</p>}
+      {state.message && <p role="alert" className="vet-notice vet-notice-danger text-sm">{state.message}</p>}
     </form>
   </details>;
 }

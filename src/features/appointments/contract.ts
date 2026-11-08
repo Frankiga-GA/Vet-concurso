@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { profileSnapshot } from "@/features/clinic-profile/contract";
 
 export const cities = ["Chincha", "Pisco", "Ica"] as const;
 export const directoryClinic = z.object({
   id: z.uuid(), slug: z.string(), name: z.string(), city: z.enum(cities),
   address: z.string(), phone: z.string(), description: z.string().nullable(),
 });
+export const directoryProfile = directoryClinic.extend(profileSnapshot.pick({ services: true, hours: true }).shape);
 export const appointment = z.object({
   id: z.uuid(), reference: z.uuid(), contact_name: z.string(), contact_phone: z.string(),
   reason: z.string(), status: z.enum(["pending", "confirmed"]),

@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
-import { createPet, saveOwner, type PetFormResult } from "@/app/account/pets/actions";
+import { createPet, saveOwner, updatePet, type PetFormResult } from "@/app/account/pets/actions";
+import type { Pet } from "./contract";
 
 const inputClass = "vet-field";
 
@@ -48,37 +49,37 @@ function SubmitForm({ action, label, clearOnSuccess = false, children }: {
   </form>;
 }
 
-export function OwnerForm() {
+export function OwnerForm({ fullName, phone }: { fullName?: string; phone?: string }) {
   return <SubmitForm action={saveOwner} label="Guardar perfil">
     <label className="block text-sm font-medium">
       Nombre completo
-      <input className={inputClass} name="fullName" autoComplete="name" required minLength={2} maxLength={180} />
+      <input className={inputClass} name="fullName" autoComplete="name" required minLength={2} maxLength={180} defaultValue={fullName} />
     </label>
     <label className="block text-sm font-medium">
       Teléfono (opcional)
-      <input className={inputClass} name="phone" type="tel" autoComplete="tel" maxLength={32} />
+      <input className={inputClass} name="phone" type="tel" autoComplete="tel" maxLength={32} defaultValue={phone} />
     </label>
   </SubmitForm>;
 }
 
-export function PetForm({ today }: { today: string }) {
-  return <SubmitForm action={createPet} label="Registrar mascota" clearOnSuccess>
+export function PetForm({ today, pet }: { today: string; pet?: Pet }) {
+  return <SubmitForm action={pet ? updatePet.bind(null, pet.id) : createPet} label={pet ? "Guardar ficha" : "Registrar mascota"} clearOnSuccess={!pet}>
     <div className="grid gap-4 sm:grid-cols-2">
       <label className="block text-sm font-medium">
         Nombre
-        <input className={inputClass} name="name" required maxLength={120} />
+        <input className={inputClass} name="name" required maxLength={120} defaultValue={pet?.name} />
       </label>
       <label className="block text-sm font-medium">
         Especie
-        <input className={inputClass} name="species" required minLength={2} maxLength={60} placeholder="Ej. perro" />
+        <input className={inputClass} name="species" required minLength={2} maxLength={60} placeholder="Ej. perro" defaultValue={pet?.species} />
       </label>
       <label className="block text-sm font-medium">
         Raza (opcional)
-        <input className={inputClass} name="breed" maxLength={120} />
+        <input className={inputClass} name="breed" maxLength={120} defaultValue={pet?.breed ?? ""} />
       </label>
       <label className="block text-sm font-medium">
         Sexo (opcional)
-        <select className={inputClass} name="sex">
+        <select className={inputClass} name="sex" defaultValue={pet?.sex === "Hembra" || pet?.sex === "Macho" ? pet.sex : ""}>
           <option value="">Sin especificar</option>
           <option>Hembra</option>
           <option>Macho</option>
@@ -86,7 +87,7 @@ export function PetForm({ today }: { today: string }) {
       </label>
       <label className="block text-sm font-medium">
         Fecha de nacimiento (opcional)
-        <input className={inputClass} name="birthDate" type="date" max={today} />
+        <input className={inputClass} name="birthDate" type="date" max={today} defaultValue={pet?.birth_date ?? ""} />
       </label>
     </div>
   </SubmitForm>;

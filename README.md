@@ -27,7 +27,9 @@ $env:VETIA_APPOINTMENT_INTAKE_KEY = 'disabled'
 pnpm dev --hostname 127.0.0.1 --port 3000
 ```
 
-Abre `http://127.0.0.1:3000`. Usa el buzón de Supabase local para confirmar cuentas y recuperar contraseñas ficticias. Para probar SQL, ejecuta `pnpm exec supabase test db --local` con las migraciones del piloto instaladas. Un stack local ya existente puede necesitar la migración incremental pendiente. Comprueba primero su historial. Reserva `db reset` para una instancia desechable.
+Abre `http://127.0.0.1:3000`. Usa el buzón de Supabase local (`http://127.0.0.1:54324`) para confirmar cuentas y recuperar contraseñas ficticias. Mantén el mismo origen al solicitar y abrir un enlace de Auth. Si cambias de origen o puerto, permite en Auth el callback de ese origen antes de probar el correo.
+
+El directorio con servicios y horarios, el selector de clínicas operativas y la edición de mascotas requieren `20261108010000_pilot_navigation_and_profiles.sql`. Para actualizar un stack local existente, comprueba su historial y aplica las pendientes con `pnpm exec supabase migration up --local`. Ejecuta `pnpm exec supabase test db --local` para verificar el esquema. Reserva `db reset` para una instancia desechable.
 
 ## Comandos
 

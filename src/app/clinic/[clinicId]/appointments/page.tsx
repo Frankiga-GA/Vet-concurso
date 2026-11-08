@@ -46,7 +46,8 @@ async function AppointmentResults({ clinicId, supabase, status, page, offset }: 
   const { data, error } = await supabase.from("appointments")
     .select("id,reference,contact_name,contact_phone,reason,preferred_at,status,agreed_at")
     .eq("clinic_id", clinicId).eq("status", status)
-    .order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + pageSize);
+    .order(status === "confirmed" ? "confirmed_at" : "created_at", { ascending: false })
+    .order("id", { ascending: false }).range(offset, offset + pageSize);
   const parsed = z.array(appointment).safeParse(data);
   return <>
     {error || !parsed.success ? <Notice tone="danger" role="alert">No se pudo cargar la bandeja. Recarga la página para intentar de nuevo.</Notice>
