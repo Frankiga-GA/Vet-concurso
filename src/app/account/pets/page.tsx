@@ -3,6 +3,7 @@ import { z } from "zod";
 import { logoutAction } from "@/app/auth/actions";
 import { OwnerForm, PetForm } from "@/features/pets/pet-forms";
 import { requireUser } from "@/lib/auth/session";
+import { Notice, PageIntro } from "@/components/vetia-ui";
 
 export const dynamic = "force-dynamic";
 
@@ -26,18 +27,17 @@ export default async function PetsPage() {
   const list = petListSchema.safeParse(data);
   const pets = list.success ? list.data : [];
 
-  return <main className="mx-auto min-h-screen max-w-5xl px-5 py-8 sm:py-12">
+  return <main className="vet-shell vet-page space-y-4">
     <header className="flex flex-wrap items-center justify-between gap-3">
-      <Link href="/account" className="text-sm font-semibold text-emerald-800 hover:underline">Volver a mi cuenta</Link>
-      <form action={logoutAction}><button className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold">Cerrar sesión</button></form>
+      <Link href="/account" className="vet-link">← Mi cuenta</Link>
+      <form action={logoutAction}><button className="vet-button vet-button-secondary">Cerrar sesión</button></form>
     </header>
-    <h1 className="mt-8 text-3xl font-semibold">Mis mascotas</h1>
-    <p className="mt-2 text-slate-600">Registra y consulta las mascotas asociadas a tu cuenta.</p>
+    <PageIntro title="Mis mascotas"><p>Registra y consulta las mascotas asociadas a tu cuenta.</p></PageIntro>
 
-    <section aria-labelledby="pets-list" className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-8">
+    <section aria-labelledby="pets-list" className="vet-card space-y-3">
       <h2 id="pets-list" className="text-xl font-semibold">Tus mascotas</h2>
-      {error || !list.success ? <p role="alert" className="mt-3 text-sm text-red-800">No pudimos cargar tus mascotas. Recarga la página para volver a intentarlo.</p>
-        : pets.length === 0 ? <p className="mt-3 text-sm text-slate-600">Aún no tienes mascotas registradas.</p>
+      {error || !list.success ? <Notice tone="danger" role="alert">No pudimos cargar tus mascotas. Recarga la página para volver a intentarlo.</Notice>
+        : pets.length === 0 ? <Notice>Aún no tienes mascotas registradas. Completa tu perfil para registrar la primera.</Notice>
         : <ul className="mt-4 grid gap-3 sm:grid-cols-2">
           {pets.map((pet) => <li key={pet.id} className="rounded-2xl border border-slate-200 p-4 break-words">
             <h3 className="font-semibold">{pet.name}</h3>
@@ -49,15 +49,16 @@ export default async function PetsPage() {
             </dl>
           </li>)}
         </ul>}
+      {pets.length > 0 && <a href="#new-pet" className="vet-button vet-button-secondary">Añadir mascota</a>}
     </section>
 
     <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_1.5fr]">
-      <section aria-labelledby="owner-profile" className="rounded-3xl bg-white p-5 shadow-sm sm:p-8">
+      <section aria-labelledby="owner-profile" className="vet-card">
         <h2 id="owner-profile" className="text-xl font-semibold">Perfil de propietario</h2>
         <p className="mt-2 text-sm text-slate-600">Guarda tu perfil antes de registrar tu primera mascota. Si actualizas el perfil con el teléfono en blanco, se eliminará el teléfono guardado.</p>
         <OwnerForm />
       </section>
-      <section aria-labelledby="new-pet" className="rounded-3xl bg-white p-5 shadow-sm sm:p-8">
+      <section aria-labelledby="new-pet" className="vet-card">
         <h2 id="new-pet" className="text-xl font-semibold">Registrar una mascota</h2>
         <PetForm today={new Date().toISOString().slice(0, 10)} />
       </section>

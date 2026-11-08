@@ -26,7 +26,7 @@ const decisions = [
   },
 ] as const;
 
-const textAreaClass = "mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-slate-900 focus-visible:outline-2 focus-visible:outline-emerald-700";
+const textAreaClass = "vet-field";
 
 function DecisionConfirmation({ label, children, enabled, pending, onConfirm }: {
   label: string;
@@ -40,7 +40,7 @@ function DecisionConfirmation({ label, children, enabled, pending, onConfirm }: 
       Ver confirmación de {label.toLowerCase()}
     </summary>
     <p className="mt-3 text-sm text-slate-700">{children}</p>
-    <button type="button" disabled={!enabled || pending} onClick={onConfirm} className="mt-3 rounded-xl bg-emerald-800 px-4 py-2 text-left text-sm font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-600">
+    <button type="button" disabled={!enabled || pending} onClick={onConfirm} className="vet-button vet-button-primary mt-3 text-sm">
       {!enabled ? "Disponible después de validar seguridad" : pending ? "Enviando…" : `Confirmar: ${label.toLowerCase()}`}
     </button>
   </details>;
@@ -104,7 +104,7 @@ export function AdministrativeDecisionPreview({ status, review, submitDecisionAc
     });
   }
 
-  return <section aria-labelledby="administrative-decision" className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-8">
+  return <section aria-labelledby="administrative-decision" className="vet-card">
     <h2 id="administrative-decision" className="text-xl font-semibold">Decisión administrativa</h2>
     <p className="mt-2 text-sm text-slate-700">{enabled
       ? "Revisa el mensaje y las notas antes de confirmar. Las notas internas no se comparten con el solicitante."

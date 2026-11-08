@@ -5,6 +5,11 @@ import { applicationReadError } from "@/features/clinic-applications/admin-read"
 import { AdministrativeDecisionPreview } from "@/features/clinic-applications/administrative-decision-preview";
 import { adminDecisionsEnabled } from "@/features/clinic-applications/decision-feature";
 import { submitAdministrativeDecision } from "./actions";
+import { submitClinicPublication } from "./publication-actions";
+import { clinicPublicationEnabled } from "@/features/clinic-profile/publication-feature";
+import { publicationReview } from "@/features/clinic-profile/publication-contract";
+import { ClinicPublicationPanel } from "@/features/clinic-profile/publication-panel";
+import { AdminNav, Notice, PageIntro } from "@/components/vetia-ui";
 import {
   adminApplicationsPath, applicationDateFormatter, applicationDetail, statusLabels, summaryColumns,
 } from "@/features/clinic-applications/admin-query";
@@ -31,11 +36,16 @@ export default async function AdminClinicApplicationPage({ params }: { params: P
     }
   }
 
-  return <main className="mx-auto max-w-4xl px-5 py-8 sm:py-12">
-    <Link href={adminApplicationsPath} className="text-sm font-semibold text-emerald-800 hover:underline">Volver a solicitudes</Link>
-    <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-8">
-      <p className="text-sm font-semibold text-emerald-800">Detalle de solicitud</p>
-      <h1 className="mt-2 text-3xl font-semibold wrap-break-word">{application?.business_name ?? "Solicitud de veterinaria"}</h1>
+  const publicationEnabled = clinicPublicationEnabled();
+  const publication = application?.submission_status === "approved" && publicationEnabled
+    ? await supabase.rpc("vetia_get_clinic_publication", { p_application_id: application.id }) : null;
+  const profile = publicationReview.safeParse(publication?.data);
+
+  return <main className="vet-shell vet-page space-y-4">
+    <AdminNav current="applications" />
+    <Link href={adminApplicationsPath} className="vet-link inline-flex min-h-11 items-center">← Volver a solicitudes</Link>
+    <section className="vet-card">
+      <PageIntro title={application?.business_name ?? "Solicitud de veterinaria"} label="Detalle de solicitud" />
       {application ? <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
         <div><dt className="font-semibold">Estado</dt><dd>{statusLabels[application.submission_status]}</dd></div>
         <div><dt className="font-semibold">Ciudad</dt><dd>{application.city}</dd></div>
@@ -49,7 +59,7 @@ export default async function AdminClinicApplicationPage({ params }: { params: P
           <dt className="font-semibold">Mensaje de revisión</dt>
           <dd className="mt-1 wrap-break-word whitespace-pre-wrap">{application.decision_message}</dd>
         </div>}
-      </dl> : <p role="alert" className="mt-4 text-sm text-slate-700">{message}</p>}
+      </dl> : <div className="mt-4"><Notice tone="danger" role="alert">{message}</Notice></div>}
     </section>
     {application && <AdministrativeDecisionPreview
       status={application.submission_status}
@@ -58,5 +68,13 @@ export default async function AdminClinicApplicationPage({ params }: { params: P
       } : undefined}
       submitDecisionAction={enabled ? submitAdministrativeDecision : undefined}
     />}
+    {application?.submission_status === "approved" && <section className="vet-card">
+      <h2 className="text-xl font-semibold">Publicación de clínica</h2>
+      {!publicationEnabled ? <div className="mt-3"><Notice tone="warning">La publicación administrativa está deshabilitada.</Notice></div>
+        : profile.success ? <ClinicPublicationPanel profile={profile.data} userId={user.id} action={submitClinicPublication} />
+        : <p role="status" className="mt-2 text-sm">{publication?.error || publication?.data
+          ? "No se pudo cargar el estado de publicación."
+          : "No hay una clínica disponible para esta solicitud."}</p>}
+    </section>}
   </main>;
 }

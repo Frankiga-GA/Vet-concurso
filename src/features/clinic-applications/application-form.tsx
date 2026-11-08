@@ -4,7 +4,7 @@ import { useRef, useState, useTransition, type FormEvent } from "react";
 import { submitClinicApplication } from "@/app/account/clinic-applications/actions";
 import { cities, createSubmissionKeys, parseApplication, submissionSlot } from "./submission";
 
-const inputClass = "mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2";
+const inputClass = "vet-field";
 
 export function ApplicationForm({ userId }: { userId: string }) {
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -76,7 +76,7 @@ export function ApplicationForm({ userId }: { userId: string }) {
           <input className={inputClass} name="contactPhone" type="tel" autoComplete="tel" required minLength={6} maxLength={32} />
         </label>
       </div>
-      <button type="submit" className="rounded-full bg-emerald-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-60">
+      <button type="submit" className="vet-button vet-button-primary">
         {pending ? "Enviando…" : "Enviar solicitud"}
       </button>
     </fieldset>

@@ -26,6 +26,10 @@ insert into public.clinic_memberships (clinic_id,user_id,role,status) values
   ('c4400000-0000-4000-8000-000000000001','c1100000-0000-4000-8000-000000000001','clinic_admin','active'),('c4400000-0000-4000-8000-000000000002','c1100000-0000-4000-8000-000000000002','clinic_staff','active'),
   ('c4400000-0000-4000-8000-000000000001','c1100000-0000-4000-8000-000000000003','clinic_staff','pending'),('c4400000-0000-4000-8000-000000000004','c1100000-0000-4000-8000-000000000004','clinic_admin','active');
 
+update public.clinics set description = 'Fixture for routine veterinary care',
+  services = array['Consulta'], opening_hours = '[{"day":1,"start":"09:00","end":"17:00"}]'
+where slug like 'appt-fixture-%';
+
 select ok(not has_table_privilege('anon','public.appointments','SELECT'),'anonymous cannot read appointment table');
 select ok(not has_any_column_privilege('authenticated','public.appointments','UPDATE'),'members cannot update appointments directly');
 select ok(not has_column_privilege('authenticated','public.appointments','request_key','SELECT'),'intake key for retries is private');

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cities, directoryClinic } from "@/features/appointments/contract";
+import { Notice, PageIntro, PublicHeader } from "@/components/vetia-ui";
 
 export const dynamic = "force-dynamic";
 
@@ -10,23 +11,32 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.rpc("vetia_public_clinics", { p_city: city, p_slug: null });
   const parsed = z.array(directoryClinic).safeParse(data);
-  return <main className="mx-auto max-w-5xl px-5 py-8 sm:py-12">
-    <Link href="/" className="text-sm font-semibold text-emerald-800">Volver a VetIA</Link>
-    <h1 className="mt-5 text-3xl font-semibold">Veterinarias</h1>
-    <p className="mt-2 text-slate-600">Encuentra un establecimiento y solicita una cita para coordinar con la clínica.</p>
-    <nav aria-label="Filtrar por ciudad" className="mt-5 flex flex-wrap gap-2">
+  return <>
+    <PublicHeader current="directory" />
+    <main className="vet-shell vet-page space-y-5">
+    <PageIntro title="Veterinarias" label="Directorio VetIA"><p>Elige una ciudad y consulta la ficha de la clínica para coordinar la atención.</p></PageIntro>
+    <nav aria-label="Filtrar por ciudad" className="flex flex-wrap gap-2">
       {[null, ...cities].map((option) => <Link key={option ?? "all"} href={option ? `/veterinarias?ciudad=${option}` : "/veterinarias"}
-        aria-current={city === option ? "page" : undefined} className={`rounded-full border border-emerald-800 px-4 py-2 text-sm font-semibold ${city === option ? "bg-emerald-800 text-white" : "text-emerald-900"}`}>
+        aria-current={city === option ? "page" : undefined} className="vet-button vet-filter">
         {option ?? "Todas"}
       </Link>)}
     </nav>
-    {error || !parsed.success ? <p role="alert" className="mt-6 text-rose-800">No pudimos cargar el directorio. Intenta de nuevo.</p>
-      : parsed.data.length === 0 ? <p className="mt-6 text-slate-600">No hay veterinarias publicadas para esta selección.</p>
-      : <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-        {parsed.data.map((clinic) => <li key={clinic.id} className="min-w-0 rounded-2xl bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-semibold wrap-break-word"><Link href={`/veterinarias/${clinic.slug}`} className="text-emerald-800 underline">{clinic.name}</Link></h2>
-          <p className="mt-2 text-sm wrap-break-word text-slate-600">{clinic.city} · {clinic.address}</p>
+    {error || !parsed.success ? <Notice role="alert" tone="danger">
+        <p>No pudimos cargar el directorio. Recarga la página para intentarlo de nuevo.</p>
+      </Notice>
+      : parsed.data.length === 0 ? <section className="vet-card space-y-2">
+        <h2 className="text-lg font-bold">No hay veterinarias publicadas{city ? ` en ${city}` : ""}</h2>
+        <p className="vet-muted">{city ? "Puedes consultar establecimientos de otras ciudades." : "El directorio mostrará aquí los establecimientos publicados."}</p>
+        {city && <Link href="/veterinarias" className="vet-button vet-button-secondary">Ver todas las ciudades</Link>}
+      </section>
+      : <ul className="grid gap-4 sm:grid-cols-2">
+        {parsed.data.map((clinic) => <li key={clinic.id} className="vet-card space-y-3">
+          <span className="vet-badge">{clinic.city}</span>
+          <h2 className="text-xl font-bold wrap-break-word">{clinic.name}</h2>
+          <p className="vet-muted wrap-break-word">{clinic.address}</p>
+          <Link href={`/veterinarias/${clinic.slug}`} className="vet-button vet-button-secondary" aria-label={`Ver ficha de ${clinic.name}`}>Ver ficha</Link>
         </li>)}
       </ul>}
-  </main>;
+    </main>
+  </>;
 }

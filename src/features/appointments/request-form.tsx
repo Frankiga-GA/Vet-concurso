@@ -7,14 +7,14 @@ import { requestAppointment } from "@/app/veterinarias/actions";
 type Turnstile = {
   render(node: HTMLElement, options: {
     sitekey: string; action: string; callback: (token: string) => void;
-    "expired-callback": () => void; "error-callback": () => void; size: "flexible";
+    "expired-callback": () => void; "error-callback": () => void; size: "compact" | "flexible";
     "response-field": boolean;
   }): string;
   reset(id: string): void;
   remove(id: string): void;
 };
 
-const input = "mt-1 w-full rounded-xl border border-slate-300 bg-white p-3 text-base";
+const input = "vet-field";
 
 export function RequestForm({ clinicId, requestKey, siteKey, challengeAction }: {
   clinicId: string; requestKey: string; siteKey: string; challengeAction: string;
@@ -31,7 +31,8 @@ export function RequestForm({ clinicId, requestKey, siteKey, challengeAction }: 
     const api = (window as Window & { turnstile?: Turnstile }).turnstile;
     if (!ready || !api || !container.current || result.reference) return;
     const id = api.render(container.current, {
-      sitekey: siteKey, action: challengeAction, size: "flexible", "response-field": false,
+      sitekey: siteKey, action: challengeAction,
+      size: container.current.clientWidth < 300 ? "compact" : "flexible", "response-field": false,
       callback: (value) => { setToken(value); setChallengeError(false); },
       "expired-callback": () => setToken(""),
       "error-callback": () => { setToken(""); setChallengeError(true); },
@@ -47,7 +48,8 @@ export function RequestForm({ clinicId, requestKey, siteKey, challengeAction }: 
     }
   }, [result]);
 
-  if (result.reference) return <div role="status" className="mt-4 rounded-xl bg-emerald-50 p-4 text-emerald-950">
+  if (result.reference) return <div role="status" className="vet-notice vet-notice-info mt-4">
+    <p className="font-bold">Solicitud enviada · Pendiente de coordinación</p>
     <p>{result.message}</p>
     <p className="mt-2 break-all font-semibold">Referencia: {result.reference}</p>
     <p className="mt-2 text-sm">Guarda la referencia. La solicitud todavía no es una cita confirmada.</p>
@@ -76,9 +78,9 @@ export function RequestForm({ clinicId, requestKey, siteKey, challengeAction }: 
     <p className="text-sm text-slate-600">El establecimiento recibirá tus datos para coordinar la cita. Si necesitas atención inmediata, llama directamente a la veterinaria.</p>
     <div ref={container} className="max-w-full" />
     {challengeError && <p role="alert" className="text-sm text-rose-800">No se pudo cargar la comprobación. Recarga la página para volver a intentarlo.</p>}
-    <button type="submit" disabled={pending || !token} className="rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white disabled:opacity-60">
+    <button type="submit" disabled={pending || !token} className="vet-button vet-button-primary w-full sm:w-auto">
       {pending ? "Enviando…" : "Enviar solicitud"}
     </button>
-    {result.message && <p role="alert" className="text-sm text-rose-800">{result.message}</p>}
+    {result.message && <p role="alert" className="vet-notice vet-notice-danger text-sm">{result.message}</p>}
   </form>;
 }

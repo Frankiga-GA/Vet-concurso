@@ -1,46 +1,36 @@
 import Link from "next/link";
-import { getSupabaseConfigStatus } from "@/lib/config";
+import { PublicHeader } from "@/components/vetia-ui";
 
 export default function HomePage() {
-  const configured = getSupabaseConfigStatus();
-
-  return (
-    <main className="min-h-screen px-5 py-8 sm:px-10">
-      <header className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
-        <Link className="text-2xl font-bold tracking-tight text-[var(--green)]" href="/">VetIA</Link>
-        <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
-          <Link href="/veterinarias">Veterinarias</Link>
-          <Link href="/auth/login">Ingresar</Link>
-          <Link href="/auth/register">Crear cuenta</Link>
-        </nav>
-      </header>
-
-      <section className="mx-auto grid max-w-6xl gap-12 py-20 md:grid-cols-[1.2fr_0.8fr] md:items-center md:py-28">
-        <div>
-          <p className="mb-5 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--green)]">Orientación que conecta</p>
-          <h1 className="max-w-2xl text-5xl font-semibold leading-[1.06] tracking-tight sm:text-6xl">Cuidar mejor empieza con saber a dónde acudir.</h1>
-          <p className="mt-6 max-w-xl text-lg leading-8 text-[var(--muted)]">VetIA reúne orientación inicial y veterinarias asociadas de Chincha, Pisco e Ica.</p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link className="rounded-full border border-emerald-900/20 bg-white px-6 py-3 font-semibold" href="/veterinarias">Buscar veterinaria</Link>
-            <Link className="rounded-full bg-[var(--green)] px-6 py-3 font-semibold text-white" href="/auth/register">Crear cuenta</Link>
-            <Link className="rounded-full border border-emerald-900/20 bg-white px-6 py-3 font-semibold" href="/auth/login">Iniciar sesión</Link>
+  return <>
+    <PublicHeader />
+    <main className="vet-shell vet-page space-y-8">
+      <section className="grid items-center gap-6 rounded-3xl bg-[var(--mint)] p-5 sm:p-8 lg:grid-cols-[1.2fr_0.8fr] lg:p-12">
+        <div className="min-w-0">
+          <p className="vet-eyebrow">Chincha · Pisco · Ica</p>
+          <h1 className="mt-3 max-w-2xl text-[clamp(2.125rem,5.5vw,3.25rem)] leading-[1.08] font-bold tracking-tight">Encuentra una veterinaria para tu mascota</h1>
+          <p className="vet-muted mt-4 max-w-lg text-lg">Consulta el directorio de veterinarias asociadas y coordina la atención directamente con la clínica.</p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Link className="vet-button vet-button-primary" href="/veterinarias">Buscar veterinaria</Link>
+            <Link className="vet-button vet-button-secondary" href="/asistente">Consultar al asistente</Link>
           </div>
-          <p className="mt-5 max-w-xl text-sm leading-6 text-[var(--muted)]">VetIA está preparando su piloto controlado. La orientación no reemplaza la evaluación de un profesional veterinario.</p>
         </div>
-
-        <aside className="rounded-[2rem] bg-[var(--mint)] p-8 sm:p-10">
-          <div className="mb-8 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold text-[var(--green)]">PILOTO VETIA</div>
-          <h2 className="text-2xl font-semibold">Una red local, con cuidado en el centro.</h2>
-          <ul className="mt-6 space-y-4 text-[var(--muted)]">
-            <li>• Orientación inicial para saber qué hacer a continuación.</li>
-            <li>• Veterinarias asociadas revisadas antes de publicarse.</li>
-            <li>• Coordinación directa con el establecimiento elegido.</li>
-          </ul>
-          {!configured && <p className="mt-8 rounded-xl bg-white/75 p-4 text-sm text-[var(--muted)]">El entorno de autenticación todavía no está configurado. La interfaz está preparada; las cuentas estarán disponibles al conectar Supabase.</p>}
-        </aside>
+        <section className="vet-card">
+          <h2 className="text-xl font-bold">Cómo funciona</h2>
+          <ol className="vet-muted mt-3 list-decimal space-y-2 pl-5">
+            <li>Elige una clínica en el directorio.</li>
+            <li>Envía una solicitud si la opción está disponible.</li>
+            <li>Coordina la fecha y hora con la clínica.</li>
+          </ol>
+          <p className="mt-3 text-sm">Puedes explorar el directorio sin crear una cuenta.</p>
+        </section>
       </section>
-
-      <footer className="mx-auto max-w-6xl border-t border-emerald-950/10 py-6 text-sm text-[var(--muted)]">Orientación responsable. Atención veterinaria real cuando hace falta.</footer>
+      <section className="vet-card flex flex-wrap items-center justify-between gap-4">
+        <div><h2 className="text-xl font-bold">¿Tienes una veterinaria?</h2>
+          <p className="vet-muted mt-1">Solicita incorporarte a la red de VetIA.</p></div>
+        <Link className="vet-button vet-button-secondary" href="/account/clinic-applications">Registrar mi veterinaria</Link>
+      </section>
+      <footer className="vet-muted border-t border-[var(--line)] pt-4 text-sm">La orientación inicial no reemplaza la atención de un profesional veterinario.</footer>
     </main>
-  );
+  </>;
 }

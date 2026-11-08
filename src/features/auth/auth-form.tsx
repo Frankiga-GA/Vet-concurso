@@ -1,5 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { Brand, Notice, PageIntro } from "@/components/vetia-ui";
+import { SubmitButton } from "@/components/submit-button";
 
 type AuthFormProps = {
   title: string;
@@ -10,14 +11,13 @@ type AuthFormProps = {
 };
 
 export function AuthForm({ title, description, action, submitLabel, children }: AuthFormProps) {
-  return <main className="grid min-h-screen place-items-center px-5 py-10">
-    <section className="w-full max-w-md rounded-3xl bg-white p-8 shadow-sm sm:p-10">
-      <Link className="text-sm font-bold tracking-wide text-emerald-800" href="/">VETIA</Link>
-      <h1 className="mt-7 text-3xl font-semibold">{title}</h1>
-      <p className="mt-2 mb-7 text-sm leading-6 text-slate-600">{description}</p>
-      <form action={action} className="space-y-5">
+  return <main className="vet-shell vet-page max-w-md">
+    <section className="vet-card space-y-5">
+      <Brand />
+      <PageIntro title={title}><p>{description}</p></PageIntro>
+      <form action={action} className="space-y-4">
         {children}
-        <button className="w-full rounded-xl bg-emerald-800 px-4 py-3 font-semibold text-white hover:bg-emerald-900" type="submit">{submitLabel}</button>
+        <SubmitButton label={submitLabel} />
       </form>
     </section>
   </main>;
@@ -35,5 +35,5 @@ export function AuthMessage({ code }: { code?: string }) {
     expired: "El enlace expiró o ya fue utilizado. Solicita uno nuevo.",
     callback: "No se pudo validar el enlace. Solicita uno nuevo.",
   };
-  return <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{messages[code] ?? "No se pudo completar la acción."}</p>;
+  return <Notice tone="danger" role="alert">{messages[code] ?? "No se pudo completar la acción."}</Notice>;
 }

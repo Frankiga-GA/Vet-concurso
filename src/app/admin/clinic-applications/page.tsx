@@ -2,6 +2,7 @@ import Link from "next/link";
 import { z } from "zod";
 import { requirePlatformAdminAal2 } from "@/lib/auth/session";
 import { applicationReadError } from "@/features/clinic-applications/admin-read";
+import { AdminNav, Notice, PageIntro } from "@/components/vetia-ui";
 import {
   adminApplicationsHref, adminApplicationsPath, applicationDateFormatter, applicationStatuses,
   applicationSummary, maxPage, pageSize, parseAdminQuery, statusLabels, summaryColumns,
@@ -10,7 +11,7 @@ import {
 export const dynamic = "force-dynamic";
 
 const filters = [...applicationStatuses, "all"] as const;
-const linkClass = "rounded-full border border-emerald-800 px-4 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-50";
+const linkClass = "vet-button vet-button-secondary text-sm";
 
 export default async function AdminClinicApplicationsPage({ searchParams }: {
   searchParams: Promise<{ status?: string | string[]; page?: string | string[] }>;
@@ -28,26 +29,26 @@ export default async function AdminClinicApplicationsPage({ searchParams }: {
   const message = (error && !outsideRange) || !parsed.success ? applicationReadError(status) : null;
   const rows = parsed.success ? parsed.data : [];
 
-  return <main className="mx-auto max-w-5xl px-5 py-8 sm:py-12">
-    <Link href="/admin" className="text-sm font-semibold text-emerald-800 hover:underline">Volver al panel</Link>
-    <h1 className="mt-6 text-3xl font-semibold">Solicitudes de veterinarias</h1>
-    <nav aria-label="Filtrar por estado" className="mt-5 flex flex-wrap gap-2">
+  return <main className="vet-shell vet-page space-y-4">
+    <AdminNav current="applications" />
+    <PageIntro title="Solicitudes de veterinarias" label="Superadministración" />
+    <nav aria-label="Filtrar por estado" className="flex flex-wrap gap-2">
       {filters.map((item) => <Link key={item} href={adminApplicationsHref(item)} aria-current={filter === item ? "page" : undefined}
-        className={filter === item ? "rounded-full bg-emerald-800 px-4 py-2 text-sm font-semibold text-white" : linkClass}>
+        className="vet-button vet-filter">
         {item === "all" ? "Todas" : statusLabels[item]}
       </Link>)}
     </nav>
-    <section aria-label="Resultados" className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-8">
-      {message ? <p role="alert" className="text-sm text-rose-800">{message}</p>
+    <section aria-label="Resultados" className="vet-card">
+      {message ? <Notice tone="danger" role="alert">{message}</Notice>
         : rows.length === 0 ? <p className="text-sm text-slate-600">
           {page === 1 ? "No hay solicitudes para este filtro." : "No hay solicitudes en esta página."}
         </p>
         : <ul className="grid gap-3 sm:grid-cols-2">
           {rows.slice(0, pageSize).map((row) => <li key={row.id} className="min-w-0 rounded-2xl border border-slate-200 p-4">
-            <Link href={`${adminApplicationsPath}/${row.id}`} className="font-semibold wrap-break-word text-emerald-900 hover:underline">
+            <Link href={`${adminApplicationsPath}/${row.id}`} className="vet-link inline-flex min-h-11 items-center wrap-break-word">
               {row.business_name}
             </Link>
-            <p className="mt-1 text-sm text-slate-600">{row.city} · {statusLabels[row.submission_status]}</p>
+            <p className="vet-muted mt-1 text-sm">{row.city} <span className={`vet-badge ${row.submission_status === "rejected" ? "vet-badge-danger" : row.submission_status === "approved" ? "" : "vet-badge-pending"}`}>{statusLabels[row.submission_status]}</span></p>
             <p className="mt-2 text-sm wrap-break-word text-slate-700">{row.contact_name} · {row.contact_email} · {row.contact_phone}</p>
             <time className="mt-2 block text-sm text-slate-600" dateTime={row.submitted_at}>{applicationDateFormatter.format(new Date(row.submitted_at))}</time>
           </li>)}

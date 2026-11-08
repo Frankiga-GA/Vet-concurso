@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import { createPet, saveOwner, type PetFormResult } from "@/app/account/pets/actions";
 
-const inputClass = "mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2";
+const inputClass = "vet-field";
 
 function SubmitForm({ action, label, clearOnSuccess = false, children }: {
   action: (data: FormData) => Promise<PetFormResult>;
@@ -38,7 +38,7 @@ function SubmitForm({ action, label, clearOnSuccess = false, children }: {
   return <form method="post" onSubmit={submit} aria-busy={pending} className="mt-5">
     <fieldset disabled={pending} className="space-y-4">
       {children}
-      <button type="submit" className="rounded-full bg-emerald-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-60">
+      <button type="submit" className="vet-button vet-button-primary">
         {pending ? "Guardando…" : label}
       </button>
     </fieldset>

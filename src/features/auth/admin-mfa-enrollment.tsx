@@ -108,10 +108,10 @@ export function AdminMfaEnrollment({ aal2, initialFactors = [], initialListFaile
   const qrImage = setup && <div className="rounded-2xl border border-slate-200 p-4">
     {/* Supabase Auth returns a short-lived SVG data URI for the TOTP enrollment QR. */}
     {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img src={setup.qrCode} alt="Código QR de configuración TOTP" className="mx-auto h-48 w-48" />
+    <img src={setup.qrCode} alt="Código QR de configuración TOTP" className="mx-auto h-auto w-48 max-w-full" />
     <form onSubmit={verify} className="mt-4 space-y-3">
-      <label className="block text-sm font-medium">Código de un solo uso<input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 8))} inputMode="numeric" autoComplete="one-time-code" required className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
-      <button disabled={busy} className="rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white disabled:opacity-60">{busy ? "Verificando…" : "Verificar factor"}</button>
+      <label className="block text-sm font-medium">Código de un solo uso<input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 8))} inputMode="numeric" autoComplete="one-time-code" required className="vet-field" /></label>
+      <button disabled={busy} className="vet-button vet-button-primary">{busy ? "Verificando…" : "Verificar factor"}</button>
     </form>
   </div>;
 
@@ -132,7 +132,7 @@ export function AdminMfaEnrollment({ aal2, initialFactors = [], initialListFaile
 
   return <section className="mt-7 space-y-5">
     <p className="text-sm leading-6 text-slate-600">El panel de superadministración requiere TOTP y una sesión AAL2. Configura una aplicación autenticadora.</p>
-    {!factorId && (pendingFactors.length === 0 || hasVerifiedTotp) && <button type="button" disabled={busy} onClick={() => void startEnrollment(false)} className="rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white disabled:opacity-60">Configurar autenticador</button>}
+    {!factorId && (pendingFactors.length === 0 || hasVerifiedTotp) && <button type="button" disabled={busy} onClick={() => void startEnrollment(false)} className="vet-button vet-button-primary">Configurar autenticador</button>}
     {qrImage}
     {pendingFactors.map((factor) => <div key={factor.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 text-sm">
       <span>{factor.friendly_name || "Autenticador"} · Configuración pendiente</span>
@@ -141,8 +141,8 @@ export function AdminMfaEnrollment({ aal2, initialFactors = [], initialListFaile
       </button>
     </div>)}
     {factorId && !setup && <form onSubmit={verify} className="space-y-3">
-      <label className="block text-sm font-medium">Código de un solo uso<input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 8))} inputMode="numeric" autoComplete="one-time-code" required className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3" /></label>
-      <button disabled={busy} className="rounded-xl bg-emerald-800 px-5 py-3 font-semibold text-white disabled:opacity-60">{busy ? "Verificando…" : "Verificar y activar"}</button>
+      <label className="block text-sm font-medium">Código de un solo uso<input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 8))} inputMode="numeric" autoComplete="one-time-code" required className="vet-field" /></label>
+      <button disabled={busy} className="vet-button vet-button-primary">{busy ? "Verificando…" : "Verificar y activar"}</button>
     </form>}
     {notice && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900">{notice}</p>}
     {error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
