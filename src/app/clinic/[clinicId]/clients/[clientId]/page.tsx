@@ -10,14 +10,15 @@ export const dynamic = "force-dynamic";
 export default async function ClinicClientPage({ params }: { params: Promise<{ clinicId: string; clientId: string }> }) {
   const { clinicId, clientId } = await params;
   if (!z.uuid().safeParse(clientId).success) notFound();
-  const supabase = await requireClinicRecords(clinicId);
+  const { supabase, membership } = await requireClinicRecords(clinicId);
   const { data, error } = await supabase.from("clinic_clients").select("id,full_name,phone,email")
     .eq("clinic_id", clinicId).eq("id", clientId).maybeSingle();
   if (!error && !data) notFound();
   const client = clientDetail.safeParse(data);
   const listUrl = `/clinic/${clinicId}/clients`;
   if (error || !client.success) return <main className="vet-shell vet-page space-y-4">
-    <ClinicNav clinicId={clinicId} current="clients" />
+    <ClinicNav clinicId={clinicId} current="clients" profile={membership.role === "clinic_admin"} />
+    <Link href={listUrl} className="vet-link inline-flex min-h-11 items-center">← Clientes</Link>
     <Notice tone="danger" role="alert">No se pudo cargar la ficha.</Notice>
   </main>;
 
@@ -25,7 +26,7 @@ export default async function ClinicClientPage({ params }: { params: Promise<{ c
     .eq("clinic_id", clinicId).eq("clinic_client_id", clientId).order("name").order("id").limit(101);
   const parsed = z.array(listedPatient).safeParse(patients.data);
   return <main className="vet-shell vet-page space-y-4">
-    <ClinicNav clinicId={clinicId} current="clients" />
+    <ClinicNav clinicId={clinicId} current="clients" profile={membership.role === "clinic_admin"} />
     <Link href={listUrl} className="vet-link inline-flex min-h-11 items-center">← Clientes</Link>
     <section className="vet-card">
       <PageIntro title={client.data.full_name} label="Ficha del cliente" />

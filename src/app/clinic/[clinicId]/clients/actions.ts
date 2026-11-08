@@ -22,8 +22,8 @@ function failed(error: { code?: string; message?: string } | null, kind: "client
 }
 
 export async function searchClinicClients(clinicId: string, _previous: SearchResult, form: FormData): Promise<SearchResult> {
-  const supabase = await requireClinicRecords(clinicId);
-  const query = searchInput.safeParse(form.get("query"));
+  const { supabase } = await requireClinicRecords(clinicId);
+  const query = searchInput.safeParse(form.get("intent") === "clear" ? "" : form.get("query"));
   if (!query.success) return { rows: [], message: "Escribe hasta 120 caracteres para buscar." };
   const { data, error } = await supabase.rpc("vetia_search_clinic_clients", { p_clinic_id: clinicId, p_query: query.data });
   const parsed = z.array(listedClient).safeParse(data);
@@ -31,7 +31,7 @@ export async function searchClinicClients(clinicId: string, _previous: SearchRes
 }
 
 export async function createClinicClient(clinicId: string, _previous: RecordResult, form: FormData): Promise<RecordResult> {
-  const supabase = await requireClinicRecords(clinicId);
+  const { supabase } = await requireClinicRecords(clinicId);
   const { read, ...base } = fields(form);
   const parsed = clientInput.safeParse({ ...base, phone: read("phone"), email: read("email") });
   if (!parsed.success) return { message: "Revisa el nombre, el teléfono y el correo opcional." };
@@ -46,7 +46,7 @@ export async function createClinicClient(clinicId: string, _previous: RecordResu
 }
 
 export async function createClinicPatient(clinicId: string, clientId: string, _previous: RecordResult, form: FormData): Promise<RecordResult> {
-  const supabase = await requireClinicRecords(clinicId);
+  const { supabase } = await requireClinicRecords(clinicId);
   if (!z.uuid().safeParse(clientId).success) return { message: "La ficha del cliente no está disponible." };
   const { read, ...base } = fields(form);
   const parsed = patientInput.safeParse({

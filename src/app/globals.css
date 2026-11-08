@@ -50,6 +50,8 @@ body {
   .vet-link { color: var(--green); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
   .vet-field { display: block; width: 100%; min-width: 0; min-height: 44px; margin-top: .25rem; border: 1px solid var(--field-border); border-radius: .75rem; padding: .625rem .75rem; color: var(--ink); background: var(--surface); font-size: 1rem; }
   .vet-field[aria-invalid="true"] { border-color: var(--danger); }
+  .vet-field:is([type="date"], [type="datetime-local"]) { max-width: 100%; }
+  .vet-field::-webkit-date-and-time-value { min-width: 0; text-align: start; }
   .vet-notice { border-radius: .75rem; padding: .875rem 1rem; overflow-wrap: anywhere; }
   .vet-notice-info { color: var(--ink); background: var(--mint); }
   .vet-notice-warning { color: var(--warning); background: var(--warning-bg); }

@@ -12,12 +12,12 @@ export const dynamic = "force-dynamic";
 export default async function NewClinicPatientPage({ params }: { params: Promise<{ clinicId: string; clientId: string }> }) {
   const { clinicId, clientId } = await params;
   if (!z.uuid().safeParse(clientId).success) notFound();
-  const supabase = await requireClinicRecords(clinicId);
+  const { supabase, membership } = await requireClinicRecords(clinicId);
   const { data, error } = await supabase.from("clinic_clients").select("full_name")
     .eq("clinic_id", clinicId).eq("id", clientId).maybeSingle();
   if (!error && !data) notFound();
   return <main className="vet-shell vet-page vet-narrow space-y-4">
-    <ClinicNav clinicId={clinicId} current="clients" />
+    <ClinicNav clinicId={clinicId} current="clients" profile={membership.role === "clinic_admin"} />
     <Link href={`/clinic/${clinicId}/clients/${clientId}`} className="vet-link inline-flex min-h-11 items-center">← Ficha del cliente</Link>
     <section className="vet-card">
       <PageIntro title="Nuevo paciente" />

@@ -54,6 +54,7 @@ export function ClinicNav({ clinicId, current, profile = false }: {
     { href: base + "/appointments", label: "Citas", current: current === "appointments" },
     { href: base + "/clients", label: "Clientes y pacientes", current: current === "clients" },
     ...(profile ? [{ href: base + "/profile", label: "Perfil", current: current === "profile" }] : []),
+    { href: "/clinic", label: "Mis clínicas" },
   ]} />;
 }
 

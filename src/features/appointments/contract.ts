@@ -37,4 +37,8 @@ export const requestFields = z.object({
   token: z.string().min(1).max(2048),
 });
 
-export type AppointmentResult = { message: string; reference?: string };
+export type AppointmentResult = {
+  message: string;
+  reference?: string;
+  fields?: Partial<Record<"name" | "phone" | "reason" | "preferred", string>>;
+};

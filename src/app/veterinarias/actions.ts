@@ -9,11 +9,21 @@ export async function requestAppointment(_previous: AppointmentResult, form: For
   const config = intakeConfig();
   if (!config) return { message: "El envío de citas no está disponible en este momento." };
   const data = requestFields.safeParse(Object.fromEntries(form));
-  if (!data.success || form.get("website") !== "") {
+  if (form.get("website") !== "") {
     return { message: "Revisa el nombre, teléfono, motivo, horario y verificación antes de enviar." };
   }
+  if (!data.success) {
+    const { name, phone, reason } = z.flattenError(data.error).fieldErrors;
+    return { message: "Revisa los datos y completa de nuevo la verificación.", fields: {
+      name: name && "Escribe un nombre de entre 2 y 120 caracteres.",
+      phone: phone && "Ingresa un teléfono válido, con entre 6 y 15 dígitos.",
+      reason: reason && "Describe el motivo en entre 5 y 500 caracteres.",
+    } };
+  }
   const preferred = parseLimaTime(data.data.preferred);
-  if (!preferred) return { message: "Elige una fecha y hora futura dentro de los próximos 90 días." };
+  if (!preferred) return { message: "Revisa el horario preferido.", fields: {
+    preferred: "Elige una fecha y hora futura dentro de los próximos 90 días.",
+  } };
   if (!(await verifyChallenge(config, data.data.token))) {
     return { message: "No se pudo verificar el envío. Completa de nuevo la comprobación e inténtalo." };
   }
