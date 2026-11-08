@@ -40,15 +40,15 @@ export async function loginAction(formData: FormData) {
   try { supabase = await createSupabaseServerClient(); }
   catch { redirect("/auth/login?error=unconfigured"); }
 
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error) redirect("/auth/login?error=credentials");
+  const { data: signIn, error } = await supabase.auth.signInWithPassword(parsed.data);
+  if (error || !signIn.user) redirect("/auth/login?error=credentials");
   const { data: isAdmin } = await supabase.rpc("vetia_is_platform_admin");
   if (isAdmin) {
     const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     redirect(assurance?.currentLevel === "aal2" ? "/admin" : "/admin/mfa");
   }
   const { data: memberships } = await supabase.from("clinic_memberships")
-    .select("clinic_id").eq("user_id", (await supabase.auth.getUser()).data.user?.id ?? "")
+    .select("clinic_id").eq("user_id", signIn.user.id)
     .eq("status", "active").limit(1);
   if (memberships?.length) redirect("/clinic");
   redirect("/account");

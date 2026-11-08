@@ -6,6 +6,8 @@ import { AdministrativeDecisionPreview } from "@/features/clinic-applications/ad
 import { adminDecisionsEnabled } from "@/features/clinic-applications/decision-feature";
 import { submitAdministrativeDecision } from "./actions";
 import { submitClinicPublication } from "./publication-actions";
+import { activateClinic } from "./activation-actions";
+import { ClinicActivationPanel } from "@/features/clinic-applications/activation-panel";
 import { clinicPublicationEnabled } from "@/features/clinic-profile/publication-feature";
 import { publicationReview } from "@/features/clinic-profile/publication-contract";
 import { ClinicPublicationPanel } from "@/features/clinic-profile/publication-panel";
@@ -37,7 +39,7 @@ export default async function AdminClinicApplicationPage({ params }: { params: P
   }
 
   const publicationEnabled = clinicPublicationEnabled();
-  const publication = application?.submission_status === "approved" && publicationEnabled
+  const publication = application?.submission_status === "approved" && (publicationEnabled || enabled)
     ? await supabase.rpc("vetia_get_clinic_publication", { p_application_id: application.id }) : null;
   const profile = publicationReview.safeParse(publication?.data);
 
@@ -68,6 +70,17 @@ export default async function AdminClinicApplicationPage({ params }: { params: P
       } : undefined}
       submitDecisionAction={enabled ? submitAdministrativeDecision : undefined}
     />}
+    {application?.submission_status === "approved" && <section className="vet-card space-y-2">
+      <h2 className="text-xl font-semibold">Activación de clínica</h2>
+      {!enabled ? <Notice tone="warning">La activación administrativa está deshabilitada.</Notice>
+        : profile.success && profile.data.lifecycle === "pending_activation" && application.reviewed_at
+          ? <ClinicActivationPanel key={application.reviewed_at} clinicId={profile.data.clinicId} userId={user.id}
+              reviewedAt={application.reviewed_at} action={activateClinic} />
+          : profile.success ? <p className="vet-muted text-sm">Estado operativo · {{
+              active: "Activa", inactive: "Inactiva", suspended: "Suspendida", pending_activation: "Revisión no disponible",
+            }[profile.data.lifecycle]}</p>
+          : <Notice tone="warning">No se pudo comprobar una clínica vinculada a la solicitud.</Notice>}
+    </section>}
     {application?.submission_status === "approved" && <section className="vet-card">
       <h2 className="text-xl font-semibold">Publicación de clínica</h2>
       {!publicationEnabled ? <div className="mt-3"><Notice tone="warning">La publicación administrativa está deshabilitada.</Notice></div>

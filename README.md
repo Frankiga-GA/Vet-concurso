@@ -6,19 +6,28 @@ PWA SaaS veterinaria en Next.js, Supabase y PostgreSQL. La fuente funcional es [
 
 - Node.js 20.9+ (entorno auditado: Node 24).
 - pnpm.
-- Supabase Cloud para el piloto, o Docker Desktop/Podman si se desea iniciar el stack local.
+- Docker Desktop o Podman para iniciar Supabase local.
 - La CLI de Supabase ya está declarada en dependencias de desarrollo; ejecútala con `pnpm exec supabase`.
 
-## Preparación
+## Ejecutar el piloto en local
 
-1. Copia `.env.example` a `.env.local` y completa `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y `NEXT_PUBLIC_SITE_URL` del proyecto de desarrollo. `SUPABASE_SECRET_KEY` solo puede usarse desde código de servidor cuando una función lo requiera; nunca la pongas en variables `NEXT_PUBLIC_*`.
-2. Instala dependencias con `pnpm install`.
-3. Para Supabase Cloud, inicia sesión en CLI (`pnpm exec supabase login`) y vincula el proyecto de desarrollo (`pnpm exec supabase link --project-ref <project-ref>`). La CLI puede pedir la contraseña de base de datos. No guardes tokens ni contraseñas en archivos versionados.
-4. Revisa el historial y el diff remoto antes de cualquier cambio (`pnpm exec supabase migration list --remote` y `pnpm exec supabase db diff --remote`). No ejecutes `db push` hasta revisar y aprobar el plan de migración.
-5. Para Supabase local, inicia Docker/Podman y usa `pnpm db:up`, `pnpm db:reset` y `pnpm db:test`.
-6. Inicia Next.js con `pnpm dev`.
+Instala las dependencias con `pnpm install --frozen-lockfile`. Con Docker en ejecución, inicia Supabase y arranca Next.js en PowerShell. El comando usa la clave publicable del stack local en la sesión actual y comprueba el destino antes de iniciar.
 
-Para confirmar y recuperar correo local, usa el buzón de pruebas de Supabase local. En un proyecto remoto configura allowlist de redirects, correo confirmado y TOTP antes de probar Auth/MFA.
+```powershell
+pnpm exec supabase start
+$local = pnpm exec supabase status -o json | ConvertFrom-Json
+if ($local.API_URL -ne 'http://127.0.0.1:54321') { throw 'Se requiere Supabase local' }
+$env:NEXT_PUBLIC_SUPABASE_URL = $local.API_URL
+$env:NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = $local.PUBLISHABLE_KEY
+$env:NEXT_PUBLIC_SITE_URL = 'http://127.0.0.1:3000'
+$env:VETIA_ADMIN_DECISIONS_ENABLED = 'false'
+$env:VETIA_CLINIC_PUBLICATION_ENABLED = 'false'
+$env:VETIA_AI_ENABLED = 'false'
+$env:VETIA_APPOINTMENT_INTAKE_KEY = 'disabled'
+pnpm dev --hostname 127.0.0.1 --port 3000
+```
+
+Abre `http://127.0.0.1:3000`. Usa el buzón de Supabase local para confirmar cuentas y recuperar contraseñas ficticias. Para probar SQL, ejecuta `pnpm exec supabase test db --local` con las migraciones del piloto instaladas. Un stack local ya existente puede necesitar la migración incremental pendiente. Comprueba primero su historial. Reserva `db reset` para una instancia desechable.
 
 ## Comandos
 
@@ -30,12 +39,8 @@ Para confirmar y recuperar correo local, usa el buzón de pruebas de Supabase lo
 - `pnpm db:up`, `pnpm db:reset`, `pnpm db:test`: Supabase local.
 - `pnpm exec supabase`: CLI para Supabase Cloud/local.
 
-## Estado de infraestructura (2026-11-06)
+El piloto incluye cuenta de propietario, mascotas, directorio, incorporación y panel de clínica con perfil, citas, clientes y pacientes. La activación administrativa queda bajo la misma bandera que la aprobación. La acreditación sigue el [procedimiento de revisión](./supabase/CLINIC_APPLICATION_DECISIONS.md). Las decisiones, la publicación, el ingreso de citas y la IA requieren habilitación separada y se mantienen cerrados en el arranque de arriba.
 
-- Git está en `main`, `origin` apunta al repositorio oficial y la rama local está sincronizada con `origin/main`.
-- `.env.local` existe y está ignorado por Git. Las variables públicas de Supabase y la clave secreta están configuradas localmente; sus valores no se imprimen ni se guardan en documentación.
-- La URL pública de Supabase Cloud y la clave publishable respondieron correctamente al endpoint de configuración de Auth. No se validó acceso a la base de datos.
-- La CLI local reporta versión 3.0.0. No está autenticada: falta `SUPABASE_ACCESS_TOKEN` y no se pudo consultar el proyecto remoto ni enlazarlo.
-- Existe una migración local inicial. No se aplicaron migraciones remotas; la comparación remota queda pendiente de autenticación y enlace.
+Antes de recibir usuarios reales quedan pendientes el respaldo verificado y el despliegue autorizado de las migraciones en PROD, Auth y recuperación en el dominio final, una clínica legítima acreditada y publicada, y el circuito de citas en HTTPS con Turnstile real. La IA requiere una validación independiente con credenciales reales del proveedor.
 
 El bootstrap del primer superadministrador es una operación única del propietario del proyecto; sigue las instrucciones de `supabase/seed/bootstrap-first-superadmin.template.sql`. No es una ruta de la aplicación.

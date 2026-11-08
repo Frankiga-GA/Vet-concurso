@@ -28,7 +28,7 @@ body {
 
 @layer components {
   .vet-shell { width: min(100%, 72rem); margin-inline: auto; padding-inline: clamp(1rem, 4vw, 2rem); }
-  .vet-page { padding-block: clamp(1.5rem, 5vw, 3rem); }
+  .vet-page { padding-block: clamp(1rem, 4vw, 2.25rem); }
   .vet-narrow { max-width: 44rem; }
   .vet-header { background: var(--surface); border-bottom: 1px solid var(--line); }
   .vet-header-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem .75rem; padding-block: .5rem; }
@@ -37,6 +37,10 @@ body {
   .vet-nav a:hover, .vet-nav [aria-current="page"] { background: var(--mint); color: var(--green); }
   .vet-brand { display: inline-flex; align-items: center; gap: .55rem; min-height: 44px; color: var(--green); font-size: 1.25rem; font-weight: 800; }
   .vet-card { min-width: 0; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); padding: clamp(1rem, 3vw, 1.5rem); }
+  .vet-hero { border: 1px solid var(--line); border-radius: 1.5rem; padding: clamp(1.125rem, 5vw, 3rem); background: linear-gradient(145deg, var(--mint), var(--paper)); }
+  .vet-card-title { font-size: 1.125rem; line-height: 1.35; font-weight: 750; }
+  .vet-card-action { display: block; transition: border-color 120ms ease, background-color 120ms ease; }
+  .vet-card-action:hover, .vet-card-action:focus-visible { border-color: var(--green); background: #f6fbf8; }
   .vet-title { font-size: clamp(1.75rem, 4vw, 2rem); line-height: 1.15; font-weight: 750; overflow-wrap: anywhere; }
   .vet-eyebrow { color: var(--green); font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
   .vet-muted { color: var(--muted); }

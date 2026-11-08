@@ -1,6 +1,6 @@
 # Activación inicial de una clínica
 
-`20261106030000_clinic_activation.sql` añade la operación SQL de Fase 3. Esta entrega no conecta acciones en Next.js.
+`20261106030000_clinic_activation.sql` añade la operación SQL de Fase 3. El detalle de la solicitud aprobada en Next.js muestra la activación de una clínica pendiente cuando la bandera de servidor `VETIA_ADMIN_DECISIONS_ENABLED` está habilitada. La bandera está apagada por defecto. La acción usa la sesión del superadministrador y la revisión original de la solicitud. La publicación es una operación independiente.
 
 ## Contrato
 
