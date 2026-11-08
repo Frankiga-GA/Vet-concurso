@@ -4,20 +4,23 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const credentialsSchema = z.object({
+const newAccountCredentials = z.object({
   email: z.email().max(254),
   password: z.string().min(10).max(128),
 });
+// Only Auth can determine whether an existing password is valid. The current
+// minimum applies when setting a password, not when verifying an old one.
+const loginCredentials = newAccountCredentials.extend({ password: z.string().min(1).max(128) });
 
-function readCredentials(formData: FormData) {
-  return credentialsSchema.safeParse({
+function readCredentials(formData: FormData, schema: typeof newAccountCredentials) {
+  return schema.safeParse({
     email: String(formData.get("email") ?? "").trim().toLowerCase(),
     password: String(formData.get("password") ?? ""),
   });
 }
 
 export async function registerAction(formData: FormData) {
-  const parsed = readCredentials(formData);
+  const parsed = readCredentials(formData, newAccountCredentials);
   if (!parsed.success) redirect("/auth/register?error=invalid");
 
   let supabase;
@@ -33,7 +36,7 @@ export async function registerAction(formData: FormData) {
 }
 
 export async function loginAction(formData: FormData) {
-  const parsed = readCredentials(formData);
+  const parsed = readCredentials(formData, loginCredentials);
   if (!parsed.success) redirect("/auth/login?error=invalid");
 
   let supabase;
