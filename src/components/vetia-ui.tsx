@@ -12,18 +12,7 @@ export function Brand({ light = false }: { light?: boolean }) {
   </Link>;
 }
 
-export function PublicHeader({ current }: { current?: "directory" | "assistant" | "account" }) {
-  return <header className="vet-header">
-    <div className="vet-shell vet-header-inner">
-      <Brand />
-      <nav aria-label="Navegación principal" className="vet-nav">
-        <Link href="/veterinarias" aria-current={current === "directory" ? "page" : undefined}>Veterinarias</Link>
-        <Link href="/asistente" aria-current={current === "assistant" ? "page" : undefined}>Asistente IA</Link>
-        <Link href="/account" aria-current={current === "account" ? "page" : undefined}>Mi cuenta</Link>
-      </nav>
-    </div>
-  </header>;
-}
+export { PublicHeader } from "./public-header";
 
 export function PageIntro({ title, label, children }: { title: string; label?: string; children?: ReactNode }) {
   return <div className="min-w-0 space-y-2">
@@ -100,12 +89,50 @@ export function AdminNav({ current }: { current: "overview" | "applications" | "
 }
 
 export function SiteFooter() {
-  return <footer className="vet-footer">
-    <div className="vet-shell vet-footer-grid">
-      <div><Brand /><p className="vet-muted mt-3 max-w-sm text-sm">Orientación responsable y conexión con veterinarias verificadas de Chincha, Pisco e Ica.</p></div>
-      <div><p className="font-bold">Explorar</p><nav className="mt-2 grid gap-2 text-sm"><Link href="/veterinarias">Directorio de veterinarias</Link><Link href="/asistente">Asistente VetIA</Link><Link href="/account">Mi cuenta</Link></nav></div>
-      <div><p className="font-bold">Para veterinarias</p><nav className="mt-2 grid gap-2 text-sm"><Link href="/account/clinic-applications">Solicitar incorporación</Link><Link href="/clinic">Panel de clínica</Link></nav></div>
-    </div>
-    <div className="vet-shell border-t border-[var(--line)] py-4 text-xs text-[var(--muted)]">© 2026 VetIA · La orientación digital no reemplaza la evaluación de un profesional veterinario.</div>
-  </footer>;
+  return (
+    <footer className="vet-footer">
+      <div className="vet-shell vet-footer-grid">
+        <div className="space-y-3">
+          <Brand />
+          <p className="vet-muted max-w-sm text-sm">
+            La red que conecta a familias con veterinarias verificadas en Chincha, Pisco e Ica.
+            Cuidado animal responsable, transparente y cercano.
+          </p>
+          <div className="flex items-center gap-2 text-xs font-semibold text-[var(--green)]">
+            <span className="vet-badge-dot" />
+            <span>Red activa en Chincha, Pisco e Ica</span>
+          </div>
+        </div>
+
+        <div>
+          <p className="font-bold text-[var(--ink)]">Directorio regional</p>
+          <nav className="mt-3 grid gap-2 text-sm">
+            <Link href="/veterinarias?city=Chincha" className="hover:text-[var(--green)]">Veterinarias en Chincha</Link>
+            <Link href="/veterinarias?city=Pisco" className="hover:text-[var(--green)]">Veterinarias en Pisco</Link>
+            <Link href="/veterinarias?city=Ica" className="hover:text-[var(--green)]">Veterinarias en Ica</Link>
+            <Link href="/asistente" className="hover:text-[var(--green)]">Orientación con Asistente IA</Link>
+          </nav>
+        </div>
+
+        <div>
+          <p className="font-bold text-[var(--ink)]">Gestión y salud</p>
+          <nav className="mt-3 grid gap-2 text-sm">
+            <Link href="/account/pets" className="hover:text-[var(--green)]">Fichas de mis mascotas</Link>
+            <Link href="/account/clinic-applications" className="hover:text-[var(--green)]">Acreditar mi veterinaria</Link>
+            <Link href="/clinic" className="hover:text-[var(--green)]">Portal de clínicas</Link>
+            <Link href="/auth/login" className="hover:text-[var(--green)]">Acceso a mi cuenta</Link>
+          </nav>
+        </div>
+      </div>
+
+      <div className="vet-shell border-t border-[var(--line)] py-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[var(--muted)]">
+          <p>© 2026 VetIA · Desarrollado para el bienestar animal y la formalidad veterinaria.</p>
+          <p className="max-w-xl text-center md:text-right">
+            <strong>Aviso de salud:</strong> La orientación digital no reemplaza la evaluación clínica, diagnóstico ni tratamiento de un médico veterinario colegiado (CMVP).
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
 }
