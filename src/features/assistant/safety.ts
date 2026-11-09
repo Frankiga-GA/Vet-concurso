@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { classification, type AssistantReply } from "./contract";
+import { classification, type AssistantReply, type publicSuggestion } from "./contract";
 import type { ModelGuidance } from "./provider";
 
 const urgentSignals = [
@@ -44,14 +44,24 @@ export function appetiteFollowUp(message: string) {
 export function appetiteGuidance(message: string): ModelGuidance | undefined {
   if (!appetiteFollowUp(message)) return undefined;
   return {
-    text: "Entiendo que te preocupe. Observa cómo se encuentra hoy y contacta a una veterinaria si el cambio se mantiene o empeora.",
+    text: "Entiendo que te preocupe que no quiera comer. Observa cómo se encuentra hoy, si bebe agua con normalidad y contacta a una veterinaria si el cambio se mantiene o empeora.",
     question: "¿Desde cuándo ocurre? ¿Está bebiendo agua y se comporta como siempre?",
   };
 }
 
-export function emergencyReply(): AssistantReply {
-  return { source: "safety", urgent: true, clinics: [], question: null,
-    text: "Busca atención veterinaria inmediata. Llama a un establecimiento cercano o acude directamente. No esperes una respuesta del asistente ni la confirmación de una cita en línea." };
+export function emergencyReply(clinics: z.infer<typeof publicSuggestion>[] = []): AssistantReply {
+  const baseText = "Busca atención veterinaria inmediata. Llama a un establecimiento cercano o acude directamente. No esperes una respuesta del asistente ni la confirmación de una cita en línea.";
+  const text = clinics.length === 0
+    ? `${baseText}\n\nNo se encontraron clínicas veterinarias disponibles en el directorio en este momento. Por favor, busca atención veterinaria urgente de inmediato por otros medios locales (hospital veterinario o clínica de urgencias 24h más cercana).`
+    : baseText;
+
+  return {
+    source: "safety",
+    urgent: true,
+    clinics: clinics.slice(0, 3),
+    question: null,
+    text,
+  };
 }
 
 const observation = {
@@ -68,17 +78,67 @@ const followUp = {
   change: "¿Ha cambiado su comportamiento habitual desde que empezó?",
 };
 
-export function renderGuidance(result: z.infer<typeof classification>, guidance?: ModelGuidance): AssistantReply {
-  if (result.level === "urgent") return { ...emergencyReply(), source: "assistant" };
-  if (result.intent === "greeting") return { source: "assistant", urgent: false, clinics: [], question: "¿En qué puedo ayudarte con tu mascota?", text: "¡Hola! 🐾 Soy VetIA, tu asistente de orientación veterinaria." };
-  if (result.intent === "thanks") return { source: "assistant", urgent: false, clinics: [], question: null, text: "¡Con gusto! Si necesitas orientación sobre tu mascota, aquí estoy." };
-  if (result.intent === "capabilities") return { source: "assistant", urgent: false, clinics: [], question: "¿Qué te gustaría consultar?", text: "Puedo orientarte sobre cuidados generales, prevención, alimentación e higiene, síntomas y señales para saber cuándo conviene consultar a una veterinaria. No reemplazo una evaluación profesional." };
-  if (result.intent === "medication") return { source: "assistant", urgent: false, clinics: [], question: "¿Qué síntomas has notado y desde cuándo?", text: "No puedo indicar medicamentos ni dosis para tu mascota. Evita administrar medicamentos humanos o tratamientos por tu cuenta; un veterinario puede indicar la opción segura según su evaluación." };
-  if (guidance) return { source: "assistant", urgent: false, clinics: [], question: guidance.question, text: guidance.text };
-  if (result.level === "clarify") return { source: "assistant", urgent: false, clinics: [], question: "¿Desde cuándo notas el cambio? ¿Está bebiendo agua y se comporta como siempre?", text: "Entiendo que te preocupe. Para ubicar mejor la situación, necesito un poco más de contexto." };
+export function renderGuidance(
+  result: z.infer<typeof classification>,
+  guidance?: ModelGuidance,
+  clinics: z.infer<typeof publicSuggestion>[] = []
+): AssistantReply {
+  const selectedClinics = clinics.slice(0, 3);
+  if (result.level === "urgent") return { ...emergencyReply(selectedClinics), source: "assistant" };
+  if (result.intent === "greeting") {
+    return {
+      source: "assistant",
+      urgent: false,
+      clinics: selectedClinics,
+      question: "¿En qué puedo ayudarte hoy con tu mascota?",
+      text: guidance?.text ?? "¡Hola! 🐾 Soy VetIA, tu asistente de orientación veterinaria. Estoy aquí para ayudarte a cuidar de tu mascota y resolver dudas de salud o bienestar.",
+    };
+  }
+  if (result.intent === "thanks") {
+    return {
+      source: "assistant",
+      urgent: false,
+      clinics: selectedClinics,
+      question: null,
+      text: guidance?.text ?? "¡Con mucho gusto! Me alegra poder orientarte. Si notas cualquier cambio en tu mascota o tienes otra duda, aquí estaré.",
+    };
+  }
+  if (result.intent === "capabilities") {
+    return {
+      source: "assistant",
+      urgent: false,
+      clinics: selectedClinics,
+      question: "¿Qué consulta tienes sobre tu mascota?",
+      text: guidance?.text ?? "Puedo orientarte sobre cuidados diarios, nutrición, prevención, higiene y primeros auxilios básicos. También te ayudo a identificar cuándo los síntomas ameritan acudir a una clínica veterinaria de nuestra red. No reemplazo un diagnóstico médico profesional.",
+    };
+  }
+  if (result.intent === "medication") {
+    return {
+      source: "assistant",
+      urgent: false,
+      clinics: selectedClinics,
+      question: "¿Qué síntomas has notado y desde cuándo?",
+      text: "No puedo indicar medicamentos ni dosis para tu mascota. Por su seguridad, evita administrar medicamentos humanos o tratamientos sin supervisión; un médico veterinario es el único facultado para prescribir el fármaco y dosis exacta tras revisarla.",
+    };
+  }
+  if (guidance) return { source: "assistant", urgent: false, clinics: selectedClinics, question: guidance.question, text: guidance.text };
+  if (result.level === "clarify") {
+    return {
+      source: "assistant",
+      urgent: false,
+      clinics: selectedClinics,
+      question: "¿Desde cuándo notas el cambio? ¿Está bebiendo agua y se comporta como siempre?",
+      text: "Entiendo tu preocupación. Para poder orientarte con mayor precisión sobre lo que le sucede a tu mascota, ¿podrías darme un poco más de contexto?",
+    };
+  }
   const recommendation = result.level === "general"
-    ? "Si hay síntomas, persisten o empeoran, consulta a un veterinario."
-    : "Contacta a un veterinario para valorar lo que ocurre. Por chat no podemos descartar una urgencia.";
-  return { source: "assistant", urgent: false, clinics: [], question: followUp[result.question],
-    text: `${observation[result.topic]} ${recommendation}` };
+    ? "Si observas molestias, cambios persistentes o decaimiento, consulta con una clínica veterinaria."
+    : "Te aconsejo contactar o acudir a una clínica veterinaria para una valoración presencial. Por chat no es posible descartar una afección mayor.";
+  return {
+    source: "assistant",
+    urgent: false,
+    clinics: selectedClinics,
+    question: followUp[result.question],
+    text: `${observation[result.topic]} ${recommendation}`,
+  };
 }

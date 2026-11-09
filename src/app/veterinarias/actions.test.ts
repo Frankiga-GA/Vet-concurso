@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requestAppointment } from "./actions";
-import { intakeConfig, verifyChallenge } from "@/features/appointments/intake-security";
+import { intakeConfig, verifyIntakeToken } from "@/features/appointments/intake-security";
 
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: vi.fn() }));
 vi.mock("@/features/appointments/intake-security", () => ({
-  intakeConfig: vi.fn(), verifyChallenge: vi.fn(),
+  intakeConfig: vi.fn(), verifyIntakeToken: vi.fn(),
 }));
 
 function request(overrides: Record<string, string> = {}) {
@@ -22,20 +22,19 @@ describe("appointment request feedback", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(intakeConfig).mockReturnValue({
-      siteKey: "fixture", secret: "fixture", hostname: "localhost", origin: "http://localhost",
-      local: true, test: true, intakeKey: "fixture",
+      intakeKey: "a".repeat(64),
     });
   });
 
   it("returns the phone error without consuming the challenge", async () => {
     const result = await requestAppointment({ message: "" }, request({ phone: "invalid" }));
     expect(result.fields?.phone).toBeTruthy();
-    expect(verifyChallenge).not.toHaveBeenCalled();
+    expect(verifyIntakeToken).not.toHaveBeenCalled();
   });
 
   it("identifies a past appointment time before verifying the challenge", async () => {
     const result = await requestAppointment({ message: "" }, request());
     expect(result.fields?.preferred).toBeTruthy();
-    expect(verifyChallenge).not.toHaveBeenCalled();
+    expect(verifyIntakeToken).not.toHaveBeenCalled();
   });
 });

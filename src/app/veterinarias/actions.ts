@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { parseLimaTime, requestFields, type AppointmentResult } from "@/features/appointments/contract";
-import { intakeConfig, verifyChallenge } from "@/features/appointments/intake-security";
+import { intakeConfig, verifyIntakeToken } from "@/features/appointments/intake-security";
 
 export async function requestAppointment(_previous: AppointmentResult, form: FormData): Promise<AppointmentResult> {
   const config = intakeConfig();
@@ -14,7 +14,7 @@ export async function requestAppointment(_previous: AppointmentResult, form: For
   }
   if (!data.success) {
     const { name, phone, reason } = z.flattenError(data.error).fieldErrors;
-    return { message: "Revisa los datos y completa de nuevo la verificación.", fields: {
+    return { message: "Revisa los datos ingresados e inténtalo nuevamente.", fields: {
       name: name && "Escribe un nombre de entre 2 y 120 caracteres.",
       phone: phone && "Ingresa un teléfono válido, con entre 6 y 15 dígitos.",
       reason: reason && "Describe el motivo en entre 5 y 500 caracteres.",
@@ -24,8 +24,8 @@ export async function requestAppointment(_previous: AppointmentResult, form: For
   if (!preferred) return { message: "Revisa el horario preferido.", fields: {
     preferred: "Elige una fecha y hora futura dentro de los próximos 90 días.",
   } };
-  if (!(await verifyChallenge(config, data.data.token))) {
-    return { message: "No se pudo verificar el envío. Completa de nuevo la comprobación e inténtalo." };
+  if (!verifyIntakeToken(config.intakeKey, data.data.clinicId, data.data.token)) {
+    return { message: "No se pudo verificar el envío de la solicitud. Por favor, completa el formulario con calma e inténtalo nuevamente." };
   }
 
   try {

@@ -6,7 +6,7 @@ export const maxContextMessages = 4;
 export const assistantInput = z.strictObject({
   messages: z.array(z.string().trim().min(3).max(maxMessageLength)).min(1).max(maxContextMessages),
   city: z.enum(cities).nullable(),
-  token: z.string().max(2048),
+  token: z.string().max(2048).optional().default(""),
 });
 export const levels = ["urgent", "consult", "clarify", "general"] as const;
 export const topics = ["general", "digestive", "skin", "mobility", "prevention", "outside_scope"] as const;
@@ -15,11 +15,16 @@ export const intents = ["greeting", "thanks", "capabilities", "symptom", "medica
 export const classification = z.strictObject({ level: z.enum(levels), topic: z.enum(topics), question: z.enum(questions), intent: z.enum(intents) });
 export const publicSuggestion = z.object({
   slug: z.string().max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  name: z.string(), city: z.enum(cities),
+  name: z.string(),
+  city: z.enum(cities),
+  address: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
 });
 export const assistantReply = z.object({
   source: z.enum(["assistant", "safety"]),
-  urgent: z.boolean(), text: z.string(), question: z.string().nullable(),
+  urgent: z.boolean(),
+  text: z.string(),
+  question: z.string().nullable(),
   clinics: z.array(publicSuggestion).max(3),
 });
 export type AssistantReply = z.infer<typeof assistantReply>;

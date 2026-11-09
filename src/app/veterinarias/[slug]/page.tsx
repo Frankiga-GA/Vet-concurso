@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { directoryProfile } from "@/features/appointments/contract";
 import { days } from "@/features/clinic-profile/contract";
-import { challengeAction, intakeConfig } from "@/features/appointments/intake-security";
+import { createIntakeToken, intakeConfig } from "@/features/appointments/intake-security";
 import { RequestForm } from "@/features/appointments/request-form";
 import { Notice, PageIntro, PublicHeader, SiteFooter } from "@/components/vetia-ui";
 
@@ -23,6 +23,7 @@ export default async function ClinicProfilePage({ params }: { params: Promise<{ 
   if (!clinic.success) notFound();
   const config = intakeConfig();
   const dial = clinic.data.phone?.replace(/[^0-9+]/g, "") ?? "";
+  const intakeToken = config ? createIntakeToken(config.intakeKey, clinic.data.id) : "";
   return <><PublicHeader current="directory" /><main className="vet-shell vet-page space-y-6">
     <Link href="/veterinarias" className="vet-link inline-flex min-h-11 items-center">← Volver al directorio</Link>
     <section className="vet-hero grid items-center gap-6 md:grid-cols-[1fr_auto]">
@@ -56,9 +57,9 @@ export default async function ClinicProfilePage({ params }: { params: Promise<{ 
       <section className="vet-card vet-card-elevated" aria-labelledby="appointment">
         <span className="vet-kicker">Solicitud en línea</span><h2 id="appointment" className="vet-section-title mt-3">Solicitar una cita</h2>
         {config && <p className="vet-muted mt-2">Indica una fecha preferida. La clínica te contactará para acordar el horario definitivo.</p>}
-      {config ? <RequestForm clinicId={clinic.data.id} requestKey={randomUUID()} siteKey={config.siteKey} challengeAction={challengeAction} />
-        : <div className="mt-4 space-y-3"><Notice tone="warning"><strong>Solicitudes en línea próximamente.</strong><span>Puedes comunicarte directamente con la veterinaria para coordinar tu atención.</span></Notice>
-          {/^[+]?[0-9]{6,15}$/.test(dial) && <a href={`tel:${dial}`} className="vet-button vet-button-primary">Llamar a la veterinaria</a>}</div>}
+        {config ? <RequestForm clinicId={clinic.data.id} requestKey={randomUUID()} intakeToken={intakeToken} />
+          : <div className="mt-4 space-y-3"><Notice tone="warning"><strong>Solicitudes en línea próximamente.</strong><span>Puedes comunicarte directamente con la veterinaria para coordinar tu atención.</span></Notice>
+            {/^[+]?[0-9]{6,15}$/.test(dial) && <a href={`tel:${dial}`} className="vet-button vet-button-primary">Llamar a la veterinaria</a>}</div>}
       </section>
     </div>
   </main><SiteFooter /></>;

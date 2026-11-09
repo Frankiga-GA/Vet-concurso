@@ -12,7 +12,7 @@ it("sends bounded JSON classification to Groq Chat Completions without tools or 
   const [url, options] = fetchMock.mock.calls[0];
   expect(url).toBe("https://api.groq.com/openai/v1/chat/completions");
   const body = JSON.parse(options.body);
-  expect(body).toMatchObject({ max_tokens: 256, messages: [{ role: "system" }, { role: "user" }] });
+  expect(body).toMatchObject({ max_tokens: 384, messages: [{ role: "system" }, { role: "user" }] });
   expect(body).not.toHaveProperty("tools");
   expect(body).not.toHaveProperty("store");
   expect(body).not.toHaveProperty("response_format");
@@ -36,12 +36,12 @@ it("does not expose provider wording that contains a dose or treatment", async (
   });
 });
 
-it("does not expose speculative diagnoses or possible causes", async () => {
-  const output = { intent: "symptom", level: "clarify", topic: "digestive", question: "onset", answer: "Puede deberse a varias razones, como estrés o un problema gastrointestinal.", follow_up: null };
+it("does not expose provider wording that claims a definitive diagnosis", async () => {
+  const output = { intent: "symptom", level: "consult", topic: "digestive", question: "none", answer: "El diagnóstico definitivo es que tu perro padece de parvovirus.", follow_up: null };
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ choices: [{ message: { content: JSON.stringify(output) } }] })));
   await expect(classifyWithGroq("test-only", "test-model", ["Mi perro no quiere comer"])).resolves.toEqual({
     ok: true,
-    classification: { intent: "symptom", level: "clarify", topic: "digestive", question: "onset" },
+    classification: { intent: "symptom", level: "consult", topic: "digestive", question: "none" },
   });
 });
 

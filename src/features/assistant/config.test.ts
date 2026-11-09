@@ -4,11 +4,9 @@ import { assistantConfig } from "./config";
 vi.mock("server-only", () => ({}));
 beforeEach(() => {
   vi.stubEnv("VETIA_AI_ENABLED", "true");
-  vi.stubEnv("VETIA_AI_MODEL", "test-model");
+  vi.stubEnv("VETIA_AI_MODEL", "openai/gpt-oss-20b");
   vi.stubEnv("GROQ_API_KEY", "test-only");
   vi.stubEnv("VETIA_AI_GATEWAY_KEY", "a".repeat(64));
-  vi.stubEnv("VETIA_AI_TURNSTILE_SITE_KEY", "1x00000000000000000000AA");
-  vi.stubEnv("VETIA_AI_TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA");
   vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://127.0.0.1:3138");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "test-only");
@@ -23,19 +21,16 @@ it("requires explicit enablement and the provider key", () => {
   expect(assistantConfig()).toBeNull();
 });
 
-it("permits test challenges only with both services on loopback", () => {
-  expect(assistantConfig()?.turnstile).toMatchObject({ local: true, test: true });
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
+it("requires a valid 64-hex gateway key for quota serialization", () => {
+  vi.stubEnv("VETIA_AI_GATEWAY_KEY", "invalid-key");
   expect(assistantConfig()).toBeNull();
 });
 
-it("requires the trusted Vercel ingress for HTTPS hosting", () => {
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://vetia.example.test");
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
-  vi.stubEnv("VETIA_AI_TURNSTILE_SITE_KEY", "configured-site-key");
-  vi.stubEnv("VETIA_AI_TURNSTILE_SECRET_KEY", "configured-test-secret");
-  vi.stubEnv("VERCEL", undefined);
-  expect(assistantConfig()).toBeNull();
-  vi.stubEnv("VERCEL", "1");
-  expect(assistantConfig()?.turnstile.origin).toBe("https://vetia.example.test");
+it("configures the allowed origin from NEXT_PUBLIC_SITE_URL or Vercel environment", () => {
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://vet-concurso.vercel.app");
+  expect(assistantConfig()?.origin).toBe("https://vet-concurso.vercel.app");
+
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
+  vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "vet-concurso.vercel.app");
+  expect(assistantConfig()?.origin).toBe("https://vet-concurso.vercel.app");
 });
