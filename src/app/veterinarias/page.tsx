@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { cities, directoryProfile } from "@/features/appointments/contract";
-import { Notice, PageIntro, PublicHeader } from "@/components/vetia-ui";
+import { EmptyState, Notice, PageIntro, PublicHeader, SiteFooter } from "@/components/vetia-ui";
 
 export const dynamic = "force-dynamic";
 
@@ -19,26 +19,33 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
   };
   return <>
     <PublicHeader current="directory" />
-    <main className="vet-shell vet-page space-y-4">
-      <PageIntro title="Veterinarias" label="Directorio VetIA"><p>Busca por ciudad o servicio y consulta la ficha de la clínica.</p></PageIntro>
-      <nav aria-label="Filtrar por ciudad" className="flex flex-wrap gap-2">
-        {[null, ...cities].map((option) => <Link key={option ?? "all"} href={directoryUrl(option)}
-          aria-current={city === option ? "page" : undefined} className="vet-button vet-filter">
-          {option ?? "Todas"}
-        </Link>)}
-      </nav>
-      <form action="/veterinarias" className="flex flex-wrap items-end gap-2">
-        {city && <input type="hidden" name="ciudad" value={city} />}
-        <label className="block min-w-0 flex-1 text-sm font-semibold">Servicio
-          <input key={service} name="servicio" type="search" maxLength={80} defaultValue={service} className="vet-field" placeholder="Ej. vacunación" />
-        </label>
-        <button type="submit" className="vet-button vet-button-primary">Buscar</button>
-        {service && <Link href={city ? `/veterinarias?ciudad=${city}` : "/veterinarias"} className="vet-button vet-button-secondary">Quitar filtro</Link>}
-      </form>
+    <main className="vet-shell vet-page space-y-7">
+      <div className="grid items-end gap-5 md:grid-cols-[1fr_auto]">
+        <PageIntro title="Encuentra una veterinaria" label="Directorio VetIA"><p>Explora establecimientos aprobados, conoce sus servicios y contacta directamente para coordinar la atención.</p></PageIntro>
+        <span className="vet-kicker">Chincha · Pisco · Ica</span>
+      </div>
+      <section className="vet-card vet-card-elevated space-y-4" aria-label="Filtros del directorio">
+        <div><h2 className="vet-card-title">¿Dónde necesitas atención?</h2><p className="vet-muted mt-1 text-sm">Elige una ciudad y busca el servicio que necesitas.</p></div>
+        <nav aria-label="Filtrar por ciudad" className="flex flex-wrap gap-2">
+          {[null, ...cities].map((option) => <Link key={option ?? "all"} href={directoryUrl(option)}
+            aria-current={city === option ? "page" : undefined} className="vet-button vet-filter">
+            {option ?? "Todas las ciudades"}
+          </Link>)}
+        </nav>
+        <form action="/veterinarias" className="grid items-end gap-3 sm:grid-cols-[1fr_auto_auto]">
+          {city && <input type="hidden" name="ciudad" value={city} />}
+          <label className="block min-w-0 text-sm font-semibold">Servicio
+            <input key={service} name="servicio" type="search" maxLength={80} defaultValue={service} className="vet-field" placeholder="Ej. vacunación, consulta, cirugía" />
+          </label>
+          <button type="submit" className="vet-button vet-button-primary">Buscar</button>
+          {service && <Link href={city ? `/veterinarias?ciudad=${city}` : "/veterinarias"} className="vet-button vet-button-secondary">Limpiar</Link>}
+        </form>
+      </section>
       <Suspense key={`${city ?? "all"}:${service}`} fallback={<Notice role="status">Buscando veterinarias…</Notice>}>
         <DirectoryResults city={city} service={service} />
       </Suspense>
     </main>
+    <SiteFooter />
   </>;
 }
 
@@ -49,19 +56,18 @@ async function DirectoryResults({ city, service }: { city: (typeof cities)[numbe
   return error || !parsed.success ? <Notice role="alert" tone="danger">
         <p>No pudimos cargar el directorio. Recarga la página para intentarlo de nuevo.</p>
       </Notice>
-      : parsed.data.length === 0 ? <section className="vet-card space-y-2">
-        <h2 className="text-lg font-bold">{service ? "No hay clínicas que coincidan con el servicio" : `No hay veterinarias publicadas${city ? ` en ${city}` : ""}`}</h2>
-        <p className="vet-muted">{service ? "Prueba otro término o quita el filtro." : city ? "Puedes consultar establecimientos de otras ciudades." : "El directorio mostrará aquí los establecimientos publicados."}</p>
+      : parsed.data.length === 0 ? <EmptyState icon="⌕" title={service ? "No encontramos ese servicio" : `Aún no hay veterinarias publicadas${city ? ` en ${city}` : ""}`}>
+        <p>{service ? "Prueba con otro término o quita el filtro para ver más resultados." : city ? "Consulta los establecimientos disponibles en las otras ciudades." : "Los establecimientos aprobados aparecerán aquí cuando completen su publicación."}</p>
         {city && <Link href="/veterinarias" className="vet-button vet-button-secondary">Ver todas las ciudades</Link>}
-      </section>
-      : <ul className="grid gap-3 sm:grid-cols-2">
+      </EmptyState>
+      : <section><div className="mb-4 flex items-center justify-between gap-3"><h2 className="vet-section-title">Veterinarias disponibles</h2><span className="vet-badge">{parsed.data.length} resultado{parsed.data.length === 1 ? "" : "s"}</span></div><ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {parsed.data.map((clinic) => <li key={clinic.id} className="min-w-0">
-          <Link href={`/veterinarias/${clinic.slug}`} className="vet-card vet-card-action h-full space-y-2">
-            <span className="vet-badge">{clinic.city}</span>
-            <h2 className="vet-card-title vet-link wrap-break-word">{clinic.name}</h2>
-            <p className="vet-muted wrap-break-word text-sm">{clinic.address}</p>
-            <p className="vet-muted wrap-break-word text-sm">{clinic.services.slice(0, 3).join(" · ")}</p>
+          <Link href={`/veterinarias/${clinic.slug}`} aria-label={`Ver ficha de ${clinic.name}`} className="vet-card vet-card-action flex h-full flex-col space-y-3">
+            <div className="flex items-center justify-between gap-3"><span className="vet-icon-tile" aria-hidden="true">✚</span><span className="vet-badge">{clinic.city}</span></div>
+            <div><h3 className="vet-card-title wrap-break-word">{clinic.name}</h3><p className="vet-muted mt-1 wrap-break-word text-sm">⌖ {clinic.address}</p></div>
+            <ul className="flex flex-wrap gap-1.5" aria-label="Servicios principales">{clinic.services.slice(0, 3).map((item) => <li key={item} className="vet-badge vet-badge-neutral">{item}</li>)}</ul>
+            <span className="vet-link mt-auto inline-flex items-center pt-2">Ver perfil y contacto →</span>
           </Link>
         </li>)}
-      </ul>;
+      </ul></section>;
 }

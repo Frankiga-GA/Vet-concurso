@@ -5,7 +5,7 @@ vi.mock("server-only", () => ({}));
 beforeEach(() => {
   vi.stubEnv("VETIA_AI_ENABLED", "true");
   vi.stubEnv("VETIA_AI_MODEL", "test-model");
-  vi.stubEnv("OPENAI_API_KEY", "test-only");
+  vi.stubEnv("GROQ_API_KEY", "test-only");
   vi.stubEnv("VETIA_AI_GATEWAY_KEY", "a".repeat(64));
   vi.stubEnv("VETIA_AI_TURNSTILE_SITE_KEY", "1x00000000000000000000AA");
   vi.stubEnv("VETIA_AI_TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA");
@@ -19,7 +19,7 @@ it("requires explicit enablement and the provider key", () => {
   vi.stubEnv("VETIA_AI_ENABLED", undefined);
   expect(assistantConfig()).toBeNull();
   vi.stubEnv("VETIA_AI_ENABLED", "true");
-  vi.stubEnv("OPENAI_API_KEY", undefined);
+  vi.stubEnv("GROQ_API_KEY", undefined);
   expect(assistantConfig()).toBeNull();
 });
 

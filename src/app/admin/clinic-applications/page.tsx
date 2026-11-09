@@ -29,26 +29,25 @@ export default async function AdminClinicApplicationsPage({ searchParams }: {
   const message = (error && !outsideRange) || !parsed.success ? applicationReadError(status) : null;
   const rows = parsed.success ? parsed.data : [];
 
-  return <main className="vet-shell vet-page space-y-4">
+  return <main className="vet-shell vet-page space-y-6">
     <AdminNav current="applications" />
-    <PageIntro title="Solicitudes de veterinarias" label="Superadministración" />
+    <div className="grid items-end gap-4 md:grid-cols-[1fr_auto]"><PageIntro title="Solicitudes de veterinarias" label="Superadministración"><p>Revisa la información enviada y abre cada expediente para continuar el proceso.</p></PageIntro><span className="vet-kicker">Bandeja de revisión</span></div>
     <nav aria-label="Filtrar por estado" className="flex flex-wrap gap-2">
       {filters.map((item) => <Link key={item} href={adminApplicationsHref(item)} aria-current={filter === item ? "page" : undefined}
         className="vet-button vet-filter">
         {item === "all" ? "Todas" : statusLabels[item]}
       </Link>)}
     </nav>
-    <section aria-label="Resultados" className="vet-card">
+    <section aria-label="Resultados" className="vet-card vet-card-elevated">
       {message ? <Notice tone="danger" role="alert">{message}</Notice>
-        : rows.length === 0 ? <p className="text-sm text-slate-600">
-          {page === 1 ? "No hay solicitudes para este filtro." : "No hay solicitudes en esta página."}
-        </p>
+        : rows.length === 0 ? <div className="vet-empty"><span className="vet-empty-icon">▤</span><h2 className="vet-card-title">{page === 1 ? "No hay solicitudes para este filtro" : "No hay solicitudes en esta página"}</h2><p className="vet-muted text-sm">Cuando una veterinaria envíe su incorporación aparecerá en esta bandeja.</p></div>
         : <ul className="grid gap-3 sm:grid-cols-2">
-          {rows.slice(0, pageSize).map((row) => <li key={row.id} className="min-w-0 rounded-2xl border border-slate-200 p-4">
-            <Link href={`${adminApplicationsPath}/${row.id}`} className="vet-link inline-flex min-h-11 items-center wrap-break-word">
-              {row.business_name}
+          {rows.slice(0, pageSize).map((row) => <li key={row.id} className="min-w-0 rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-4">
+            <div className="flex items-start justify-between gap-3"><span className="vet-icon-tile">✚</span><span className={`vet-badge ${row.submission_status === "rejected" ? "vet-badge-danger" : row.submission_status === "approved" ? "" : "vet-badge-pending"}`}>{statusLabels[row.submission_status]}</span></div>
+            <Link href={`${adminApplicationsPath}/${row.id}`} className="mt-3 block text-lg font-bold wrap-break-word">
+              {row.business_name} <span className="text-[var(--green)]">→</span>
             </Link>
-            <p className="vet-muted mt-1 text-sm">{row.city} <span className={`vet-badge ${row.submission_status === "rejected" ? "vet-badge-danger" : row.submission_status === "approved" ? "" : "vet-badge-pending"}`}>{statusLabels[row.submission_status]}</span></p>
+            <p className="vet-muted mt-1 text-sm">⌖ {row.city}</p>
             <p className="mt-2 text-sm wrap-break-word text-slate-700">{row.contact_name} · {row.contact_email} · {row.contact_phone}</p>
             <time className="mt-2 block text-sm text-slate-600" dateTime={row.submitted_at}>{applicationDateFormatter.format(new Date(row.submitted_at))}</time>
           </li>)}

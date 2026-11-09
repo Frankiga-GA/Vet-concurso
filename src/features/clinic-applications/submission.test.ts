@@ -4,10 +4,19 @@ import { createSubmissionKeys, parseApplication, submissionKeySchema, submission
 function validForm() {
   const data = new FormData();
   data.set("businessName", " Veterinaria Sol ");
+  data.set("legalName", " Servicios Veterinarios Sol S.A.C. ");
+  data.set("ruc", "20123456789");
   data.set("city", "Ica");
+  data.set("address", "Av. San Martín 123");
   data.set("contactName", " Ana Pérez ");
   data.set("contactEmail", " ANA@EXAMPLE.COM ");
   data.set("contactPhone", "+51 999 111 222");
+  data.set("legalRepresentativeName", " Ana Pérez ");
+  data.set("legalRepresentativeDocument", "12345678");
+  data.set("veterinarianName", " Dr. Carlos Gómez ");
+  data.set("veterinarianLicense", "CMVP-12345");
+  data.set("services", "Consulta general, Vacunación, Cirugía");
+  data.set("openingHours", JSON.stringify([{ day: 1, start: "09:00", end: "18:00" }]));
   return data;
 }
 
@@ -15,17 +24,34 @@ describe("clinic applications", () => {
   it("normalizes names and email before submission", () => {
     expect(parseApplication(validForm()).data).toMatchObject({
       businessName: "Veterinaria Sol",
+      legalName: "Servicios Veterinarios Sol S.A.C.",
+      ruc: "20123456789",
+      city: "Ica",
+      address: "Av. San Martín 123",
       contactName: "Ana Pérez",
       contactEmail: "ana@example.com",
+      legalRepresentativeName: "Ana Pérez",
+      legalRepresentativeDocument: "12345678",
+      veterinarianName: "Dr. Carlos Gómez",
+      veterinarianLicense: "CMVP-12345",
+      services: ["Consulta general", "Vacunación", "Cirugía"],
+      openingHours: [{ day: 1, start: "09:00", end: "18:00" }],
     });
   });
 
   it.each([
     ["businessName", "   "],
+    ["legalName", " "],
+    ["ruc", "123"],
     ["city", "Lima"],
+    ["address", "Av"],
     ["contactName", ""],
     ["contactEmail", "invalid"],
     ["contactPhone", "+++++++"],
+    ["legalRepresentativeName", ""],
+    ["legalRepresentativeDocument", "123"],
+    ["veterinarianName", ""],
+    ["veterinarianLicense", ""],
   ])("rejects invalid %s", (field, value) => {
     const data = validForm();
     data.set(field, value);

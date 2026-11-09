@@ -6,7 +6,7 @@ export const assistantChallenge = "vetia_assistant";
 
 export function assistantConfig() {
   if (process.env.VETIA_AI_ENABLED !== "true") return null;
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const apiKey = process.env.GROQ_API_KEY?.trim();
   const model = process.env.VETIA_AI_MODEL?.trim();
   const gatewayKey = process.env.VETIA_AI_GATEWAY_KEY;
   const turnstile = turnstileConfig(process.env.VETIA_AI_TURNSTILE_SITE_KEY, process.env.VETIA_AI_TURNSTILE_SECRET_KEY);

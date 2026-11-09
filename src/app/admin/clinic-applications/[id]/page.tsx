@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requirePlatformAdminAal2 } from "@/lib/auth/session";
 import { applicationReadError } from "@/features/clinic-applications/admin-read";
 import { AdministrativeDecisionPreview } from "@/features/clinic-applications/administrative-decision-preview";
+import { AccreditationPanel } from "@/features/clinic-applications/accreditation-panel";
+import { applicationDocumentSchema, accreditationSchema } from "@/features/clinic-applications/accreditation-contract";
 import { adminDecisionsEnabled } from "@/features/clinic-applications/decision-feature";
 import { submitAdministrativeDecision } from "./actions";
 import { submitClinicPublication } from "./publication-actions";
@@ -17,6 +19,13 @@ import {
 } from "@/features/clinic-applications/admin-query";
 
 export const dynamic = "force-dynamic";
+
+const applicationPrivateDetails = z.object({
+  legal_name: z.string().nullable(), ruc: z.string().nullable(), address: z.string().nullable(),
+  legal_representative_name: z.string().nullable(), representative_document: z.string().nullable(),
+  veterinarian_name: z.string().nullable(), veterinarian_license: z.string().nullable(),
+  services: z.array(z.string()).nullable(), opening_hours: z.unknown().nullable(),
+});
 
 export default async function AdminClinicApplicationPage({ params }: { params: Promise<{ id: string }> }) {
   const { supabase, user } = await requirePlatformAdminAal2();
@@ -38,37 +47,122 @@ export default async function AdminClinicApplicationPage({ params }: { params: P
     }
   }
 
+  const rawDocs = application ? await supabase.rpc("vetia_get_application_documents", { p_application_id: application.id }) : null;
+  const parsedDocs = z.array(applicationDocumentSchema).safeParse(rawDocs?.data);
+  const docsWithUrls: Array<z.infer<typeof applicationDocumentSchema> & { downloadUrl: string }> = [];
+  if (parsedDocs.success) {
+    for (const doc of parsedDocs.data) {
+      const { data: signed } = await supabase.storage.from("clinic-accreditation").createSignedUrl(doc.storage_path, 900);
+      docsWithUrls.push({ ...doc, downloadUrl: signed?.signedUrl ?? "#" });
+    }
+  }
+
+  const rawAcc = application ? await supabase.rpc("vetia_get_clinic_accreditation", { p_application_id: application.id }).maybeSingle() : null;
+  const accreditation = accreditationSchema.nullable().safeParse(rawAcc?.data);
+
   const publicationEnabled = clinicPublicationEnabled();
+  const detailsResult = application ? await supabase.rpc("vetia_get_admin_clinic_application_details", { p_application_id: application.id }).maybeSingle() : null;
+  const privateDetails = applicationPrivateDetails.nullable().safeParse(detailsResult?.data);
   const publication = application?.submission_status === "approved" && (publicationEnabled || enabled)
     ? await supabase.rpc("vetia_get_clinic_publication", { p_application_id: application.id }) : null;
   const profile = publicationReview.safeParse(publication?.data);
 
+  const missingDataFields: string[] = [];
+  if (!privateDetails.data?.ruc || privateDetails.data.ruc.length !== 11) missingDataFields.push("RUC de 11 dígitos");
+  if (!privateDetails.data?.legal_name) missingDataFields.push("Razón social");
+  if (!privateDetails.data?.legal_representative_name) missingDataFields.push("Responsable legal");
+  if (!privateDetails.data?.veterinarian_name) missingDataFields.push("Veterinario responsable");
+  if (!privateDetails.data?.veterinarian_license) missingDataFields.push("Colegiatura (CMVP)");
+  const isDataIncomplete = Boolean(application && missingDataFields.length > 0);
+
   return <main className="vet-shell vet-page space-y-4">
     <AdminNav current="applications" />
     <Link href={adminApplicationsPath} className="vet-link inline-flex min-h-11 items-center">← Volver a solicitudes</Link>
-    <section className="vet-card">
-      <PageIntro title={application?.business_name ?? "Solicitud de veterinaria"} label="Detalle de solicitud" />
-      {application ? <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-        <div><dt className="font-semibold">Estado</dt><dd>{statusLabels[application.submission_status]}</dd></div>
-        <div><dt className="font-semibold">Ciudad</dt><dd>{application.city}</dd></div>
-        <div><dt className="font-semibold">Contacto</dt><dd className="wrap-break-word">{application.contact_name}</dd></div>
-        <div><dt className="font-semibold">Correo</dt><dd className="wrap-break-word">{application.contact_email}</dd></div>
-        <div><dt className="font-semibold">Teléfono</dt><dd>{application.contact_phone}</dd></div>
-        <div><dt className="font-semibold">Enviada el</dt><dd><time dateTime={application.submitted_at}>
-          {applicationDateFormatter.format(new Date(application.submitted_at))}
-        </time></dd></div>
-        {application.decision_message && <div className="sm:col-span-2">
-          <dt className="font-semibold">Mensaje de revisión</dt>
-          <dd className="mt-1 wrap-break-word whitespace-pre-wrap">{application.decision_message}</dd>
-        </div>}
-      </dl> : <div className="mt-4"><Notice tone="danger" role="alert">{message}</Notice></div>}
+    <section className="vet-card space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="vet-eyebrow">Paso 1</p>
+          <PageIntro title={application?.business_name ?? "Solicitud de veterinaria"} label="Datos del establecimiento y legales" />
+        </div>
+        {application && (
+          <div className="flex flex-wrap items-center gap-2">
+            {isDataIncomplete && (
+              <span className="vet-badge vet-badge-danger">Información incompleta</span>
+            )}
+            <span className="vet-badge">{statusLabels[application.submission_status]}</span>
+          </div>
+        )}
+      </div>
+
+      {application ? (
+        <div className="space-y-4">
+          {isDataIncomplete && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50/90 p-3 text-xs text-amber-950">
+              <span className="font-semibold">⚠️ Solicitud con datos incompletos:</span> faltan registrar{" "}
+              <strong>{missingDataFields.join(" · ")}</strong>. En el Paso 3 puedes solicitar al postulante que complete estos datos desde su cuenta.
+            </div>
+          )}
+
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Datos de contacto del establecimiento</h3>
+            <dl className="mt-2 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+              <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Ciudad</dt><dd className="mt-1 font-bold">{application.city}</dd></div>
+              <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Contacto</dt><dd className="mt-1 wrap-break-word font-bold">{application.contact_name}</dd></div>
+              <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Correo</dt><dd className="mt-1 wrap-break-word">{application.contact_email}</dd></div>
+              <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Teléfono</dt><dd className="mt-1">{application.contact_phone}</dd></div>
+              <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Fecha de envío</dt><dd className="mt-1"><time dateTime={application.submitted_at}>
+                {applicationDateFormatter.format(new Date(application.submitted_at))}
+              </time></dd></div>
+              {application.decision_message && <div className="vet-notice vet-notice-info sm:col-span-2 lg:col-span-3">
+                <dt className="font-semibold">Mensaje de revisión</dt>
+                <dd className="mt-1 wrap-break-word whitespace-pre-wrap">{application.decision_message}</dd>
+              </div>}
+            </dl>
+          </div>
+
+          {detailsResult?.error || !privateDetails.success ? (
+            <Notice tone="danger" role="alert">No pudimos cargar el expediente ampliado. Recarga la página antes de decidir.</Notice>
+          ) : privateDetails.data ? (
+            <div className="pt-3 border-t border-[var(--line)]">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Expediente privado (MFA AAL2)</h3>
+                <span className="text-[11px] text-slate-500">No publicado en directorio público</span>
+              </div>
+              <dl className="mt-2 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Razón social</dt><dd className="mt-1 wrap-break-word font-bold">{privateDetails.data.legal_name ?? <span className="text-rose-600 font-semibold">No registrada</span>}</dd></div>
+                <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">RUC</dt><dd className="mt-1 font-bold">{privateDetails.data.ruc ?? <span className="text-rose-600 font-semibold">No registrado</span>}</dd></div>
+                <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Dirección</dt><dd className="mt-1 wrap-break-word">{privateDetails.data.address ?? <span className="text-slate-400">No registrada</span>}</dd></div>
+                <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Responsable legal</dt><dd className="mt-1 wrap-break-word font-bold">{privateDetails.data.legal_representative_name ?? <span className="text-rose-600 font-semibold">No registrado</span>}</dd></div>
+                <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Documento privado</dt><dd className="mt-1 font-bold">{privateDetails.data.representative_document ?? <span className="text-slate-400">No registrado</span>}</dd></div>
+                <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Veterinario responsable</dt><dd className="mt-1 wrap-break-word font-bold">{privateDetails.data.veterinarian_name ?? <span className="text-rose-600 font-semibold">No registrado</span>}</dd></div>
+                <div className="vet-stat"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Colegiatura</dt><dd className="mt-1 font-bold">{privateDetails.data.veterinarian_license ?? <span className="text-rose-600 font-semibold">No registrada</span>}</dd></div>
+                <div className="vet-stat sm:col-span-2"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Servicios</dt><dd className="mt-1 wrap-break-word">{privateDetails.data.services?.join(" · ") || "No registrados"}</dd></div>
+                <div className="vet-stat sm:col-span-2 lg:col-span-3"><dt className="vet-muted text-xs font-semibold uppercase tracking-wide">Horarios declarados</dt><dd className="mt-1 wrap-break-word whitespace-pre-wrap">{privateDetails.data.opening_hours ? JSON.stringify(privateDetails.data.opening_hours) : "No registrados"}</dd></div>
+              </dl>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="mt-4"><Notice tone="danger" role="alert">{message}</Notice></div>
+      )}
     </section>
+    {application && <AccreditationPanel
+      applicationId={application.id}
+      ruc={privateDetails.data?.ruc ?? null}
+      legalName={privateDetails.data?.legal_name ?? null}
+      representativeName={privateDetails.data?.legal_representative_name ?? null}
+      veterinarianName={privateDetails.data?.veterinarian_name ?? null}
+      veterinarianLicense={privateDetails.data?.veterinarian_license ?? null}
+      documents={docsWithUrls}
+      accreditation={accreditation.success ? accreditation.data : null}
+    />}
     {application && <AdministrativeDecisionPreview
       status={application.submission_status}
       review={enabled ? {
         userId: user.id, applicationId: application.id, expectedReviewedAt: application.reviewed_at,
       } : undefined}
       submitDecisionAction={enabled ? submitAdministrativeDecision : undefined}
+      isAccredited={accreditation.success ? (accreditation.data?.is_representation_active ?? false) : false}
     />}
     {application?.submission_status === "approved" && <section className="vet-card space-y-2">
       <h2 className="text-xl font-semibold">Activación de clínica</h2>

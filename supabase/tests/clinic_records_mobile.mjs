@@ -8,7 +8,8 @@ const api = "http://127.0.0.1:54321";
 const site = "http://127.0.0.1:3138";
 const { VETIA_LOCAL_TEST_KEY: adminKey, VETIA_LOCAL_PUBLISHABLE_KEY: publicKey, VETIA_PLAYWRIGHT_ENTRY: entry } = process.env;
 assert(adminKey && publicKey && entry, "Supply local test keys and a Playwright entry point");
-const { chromium } = await import(pathToFileURL(entry).href);
+const playwright = await import(pathToFileURL(entry).href);
+const { chromium } = playwright.default ?? playwright;
 const clinics = [randomUUID(), randomUUID()];
 const apps = [randomUUID(), randomUUID()];
 const slug = "records-mobile-" + randomUUID();
@@ -66,7 +67,7 @@ try {
   await login(staff, 0);
   const clinicUrl = site + "/clinic/" + clinics[0];
   await staff.goto(clinicUrl);
-  await staff.getByRole("link", { name: "Clientes y pacientes" }).click();
+  await staff.getByRole("link", { name: "Clientes y pacientes", exact: true }).click();
   await staff.getByRole("heading", { name: "Clientes y pacientes" }).waitFor();
   const noOverflow = () => staff.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
   assert(await noOverflow());
@@ -137,9 +138,7 @@ try {
   console.log("PASS mobile 390px: client, patient, search, duplicate warning, URL and PostgREST isolation");
 } catch (error) {
   console.error("FAIL " + stage + " (" + error.name + ")");
-  if (stage === "direct API foreign patient association" && error.message.startsWith("Expected foreign association rejection")) {
-    console.error(error.message);
-  }
+  console.error(error instanceof Error ? error.stack ?? error.message : String(error));
   process.exitCode = 1;
 } finally {
   if (browser) await browser.close();

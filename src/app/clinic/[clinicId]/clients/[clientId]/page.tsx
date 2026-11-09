@@ -25,24 +25,23 @@ export default async function ClinicClientPage({ params }: { params: Promise<{ c
   const patients = await supabase.from("clinic_patients").select("id,name,species,breed,sex,birth_date")
     .eq("clinic_id", clinicId).eq("clinic_client_id", clientId).order("name").order("id").limit(101);
   const parsed = z.array(listedPatient).safeParse(patients.data);
-  return <main className="vet-shell vet-page space-y-4">
+  return <main className="vet-shell vet-page space-y-6">
     <ClinicNav clinicId={clinicId} current="clients" profile={membership.role === "clinic_admin"} />
     <Link href={listUrl} className="vet-link inline-flex min-h-11 items-center">← Clientes</Link>
-    <section className="vet-card">
-      <PageIntro title={client.data.full_name} label="Ficha del cliente" />
-      <dl className="mt-4 grid gap-3 wrap-break-word">
-        <div><dt className="font-semibold">Teléfono</dt><dd>{client.data.phone}</dd></div>
-        <div><dt className="font-semibold">Correo</dt><dd>{client.data.email ?? "Sin registrar"}</dd></div>
+    <section className="vet-card vet-card-elevated">
+      <div className="flex flex-wrap items-start gap-4"><span className="vet-icon-tile">♟</span><PageIntro title={client.data.full_name} label="Ficha del cliente" /></div>
+      <dl className="mt-5 grid gap-3 wrap-break-word sm:grid-cols-2">
+        <div className="vet-stat"><dt className="vet-muted text-sm">Teléfono</dt><dd className="mt-1 font-semibold">{client.data.phone}</dd></div>
+        <div className="vet-stat"><dt className="vet-muted text-sm">Correo</dt><dd className="mt-1 font-semibold">{client.data.email ?? "Sin registrar"}</dd></div>
       </dl>
     </section>
     <section id="pacientes" className="vet-card">
-      <h2 className="text-xl font-semibold">Pacientes</h2>
-      <Link href={`${listUrl}/${clientId}/patients/new`} className="vet-button vet-button-primary mt-3">Añadir paciente</Link>
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="vet-eyebrow">Mascotas vinculadas</p><h2 className="vet-section-title mt-1">Pacientes</h2></div><Link href={`${listUrl}/${clientId}/patients/new`} className="vet-button vet-button-primary">+ Añadir paciente</Link></div>
       {patients.error || !parsed.success ? <p role="alert" className="vet-notice vet-notice-danger mt-4">No se pudieron cargar los pacientes.</p>
-        : parsed.data.length === 0 ? <p className="vet-notice vet-notice-info mt-4">Este cliente todavía no tiene pacientes.</p>
-        : <ul className="mt-4 divide-y divide-slate-200">
-          {parsed.data.slice(0, 100).map((patient) => <li key={patient.id} className="py-3 wrap-break-word">
-            <h3 className="font-semibold">{patient.name}</h3>
+        : parsed.data.length === 0 ? <div className="vet-empty mt-4"><span className="vet-empty-icon">🐾</span><h3 className="vet-card-title">Aún no hay pacientes</h3><p className="vet-muted text-sm">Registra la primera mascota asociada a este cliente.</p></div>
+        : <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+          {parsed.data.slice(0, 100).map((patient) => <li key={patient.id} className="rounded-xl border border-[var(--line)] bg-[var(--paper)] p-4 wrap-break-word">
+            <div className="flex items-center gap-3"><span className="vet-icon-tile">🐾</span><h3 className="font-semibold">{patient.name}</h3></div>
             <p>{patient.species}{patient.breed && ` · ${patient.breed}`}</p>
             <p className="text-sm text-slate-700">
               {patient.sex === "male" ? "Macho" : patient.sex === "female" ? "Hembra" : "Sexo sin especificar"}

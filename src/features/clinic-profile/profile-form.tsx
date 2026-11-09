@@ -17,6 +17,7 @@ export function ClinicProfileForm({ profile, action }: {
   const [hours, setHours] = useState(profile.hours);
   const published = state.profile.publication === "published";
   const missing = state.profile.missing;
+  const completion = Math.round(((6 - missing.length) / 6) * 100);
   const error = state.invalid ? "clinic-profile-feedback" : undefined;
   const fields = [
     { key: "name", max: 120 }, { key: "address", max: 200 }, { key: "phone", max: 16 },
@@ -28,13 +29,15 @@ export function ClinicProfileForm({ profile, action }: {
   }
 
   return <form action={submit} className="mt-6 space-y-5" aria-busy={pending}>
-    <section className={`vet-notice ${missing.length ? "vet-notice-warning" : "vet-notice-info"}`} aria-live="polite">
-      <h2 className="font-semibold">{missing.length ? "Perfil guardado incompleto" : "Perfil guardado completo"}</h2>
-      {missing.length > 0 && <p>Falta completar {missing.map((key) => fieldLabels[key]).join(", ")}.</p>}
+    <section className="vet-card vet-card-soft" aria-live="polite">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="vet-eyebrow">Completitud del perfil</p><h2 className="vet-card-title mt-1">{missing.length ? "Tu ficha necesita algunos datos" : "Tu ficha está completa"}</h2></div><span className="text-2xl font-extrabold text-[var(--green)]">{completion}%</span></div>
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-white" aria-hidden="true"><div className="h-full rounded-full bg-[var(--green)]" style={{ width: `${completion}%` }} /></div>
+      {missing.length > 0 && <p className="vet-muted mt-3 text-sm">Pendiente: {missing.map((key) => fieldLabels[key]).join(", ")}.</p>}
       {published && <p>La ficha está publicada. Solicita su retiro autorizado antes de editarla.</p>}
     </section>
-    <fieldset disabled={pending || published} className="vet-card grid gap-4">
-      <legend className="px-1 font-semibold">Datos de la clínica</legend>
+    <fieldset disabled={pending || published} className="vet-card grid gap-5">
+      <legend className="sr-only">Datos de la clínica</legend>
+      <div><p className="vet-eyebrow">Información pública</p><h2 className="vet-section-title mt-1">Datos de la clínica</h2><p className="vet-muted mt-2 text-sm">Esta información aparecerá en el directorio cuando la publicación sea autorizada.</p></div>
       <input type="hidden" name="revision" value={state.profile.revision} />
       {fields.map(({ key, max }) => {
         const shared = {
@@ -47,8 +50,8 @@ export function ClinicProfileForm({ profile, action }: {
             ? <textarea {...shared} rows={4} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} />
             : <input {...shared} type={key === "phone" ? "tel" : "text"} required={key === "name"}
                 onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} />}
-          {key === "services" && <span className="block text-sm font-normal">Escribe un servicio por línea, hasta 20.</span>}
-          {key === "phone" && <span className="block text-sm font-normal">Usa de 6 a 15 dígitos y, si corresponde, el signo + al inicio.</span>}
+          {key === "services" && <span className="vet-help">Escribe un servicio por línea, hasta 20.</span>}
+          {key === "phone" && <span className="vet-help">Usa de 6 a 15 dígitos y, si corresponde, el signo + al inicio.</span>}
         </label>;
       })}
       <label className="block font-medium">Ciudad
@@ -57,11 +60,11 @@ export function ClinicProfileForm({ profile, action }: {
           {cities.map((city) => <option key={city}>{city}</option>)}
         </select>
       </label>
-      <section aria-labelledby="clinic-hours" aria-describedby={state.invalid === "hours" ? error : undefined}>
-        <h2 id="clinic-hours" className="font-semibold">Horarios</h2>
-        <p className="text-sm text-slate-700">Hora de Perú en formato HH:MM. Usa 24:00 para el cierre a medianoche. Si un turno cruza medianoche, divídelo en dos días. El horario es informativo.</p>
+      <section className="vet-form-section" aria-labelledby="clinic-hours" aria-describedby={state.invalid === "hours" ? error : undefined}>
+        <p className="vet-eyebrow">Disponibilidad informativa</p><h2 id="clinic-hours" className="vet-card-title mt-1">Horarios de atención</h2>
+        <p className="vet-muted mt-2 text-sm">Hora de Perú en formato HH:MM. Si un turno cruza medianoche, divídelo en dos días.</p>
         <input type="hidden" name="hours" value={JSON.stringify(hours)} />
-        {hours.map((slot, index) => <fieldset key={index} className="mt-3 grid min-w-0 gap-2 rounded-xl border border-slate-300 p-3 sm:grid-cols-3">
+        {hours.map((slot, index) => <fieldset key={index} className="mt-3 grid min-w-0 gap-3 rounded-xl border border-[var(--line)] bg-white p-3 sm:grid-cols-3">
           <legend className="px-1 text-sm font-semibold">Turno {index + 1}</legend>
           <label>Día
             <select className={control} value={slot.day} onChange={(event) => editHour(index, { day: Number(event.target.value) })}>
@@ -70,10 +73,10 @@ export function ClinicProfileForm({ profile, action }: {
           </label>
           <label>Desde<input className={control} maxLength={5} placeholder="09:00" value={slot.start} onChange={(event) => editHour(index, { start: event.target.value })} /></label>
           <label>Hasta<input className={control} maxLength={5} placeholder="18:00" value={slot.end} onChange={(event) => editHour(index, { end: event.target.value })} /></label>
-          <button type="button" className="min-h-11 text-left font-semibold text-rose-800" onClick={() => setHours((slots) => slots.filter((_, i) => i !== index))}>Quitar turno {index + 1}</button>
+          <button type="button" className="vet-button vet-button-danger sm:col-span-3 sm:w-fit" onClick={() => setHours((slots) => slots.filter((_, i) => i !== index))}>Quitar turno {index + 1}</button>
         </fieldset>)}
-        <button type="button" disabled={hours.length >= 28} className="mt-2 min-h-11 font-semibold text-emerald-800"
-          onClick={() => setHours((slots) => [...slots, { day: 1, start: "", end: "" }])}>Añadir turno</button>
+        <button type="button" disabled={hours.length >= 28} className="vet-button vet-button-secondary mt-3"
+          onClick={() => setHours((slots) => [...slots, { day: 1, start: "", end: "" }])}>+ Añadir turno</button>
       </section>
       <button className="vet-button vet-button-primary"
         disabled={pending || published}>{pending ? "Guardando…" : "Guardar cambios"}</button>

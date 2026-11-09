@@ -6,7 +6,8 @@ import { pathToFileURL } from "node:url";
 
 const { VETIA_LOCAL_TEST_KEY: localKey, VETIA_PLAYWRIGHT_ENTRY: entry } = process.env;
 assert(localKey && entry, "Use Supabase local credentials and a Playwright module path");
-const { chromium } = await import(pathToFileURL(entry).href);
+const playwright = await import(pathToFileURL(entry).href);
+const { chromium } = playwright.default ?? playwright;
 const api = "http://127.0.0.1:54321";
 const site = "http://127.0.0.1:3138";
 const slug = "ui-pilot-" + randomUUID();
@@ -70,9 +71,9 @@ try {
     try {
       stage = `${width}px public navigation`;
       await page.goto(site);
-      await page.getByRole("heading", { name: "Encuentra una veterinaria para tu mascota" }).waitFor();
+      await page.getByRole("heading", { name: "Cuidar a tu mascota empieza con encontrar ayuda confiable." }).waitFor();
       await noOverflow(page);
-      await page.getByRole("link", { name: "VetIA, inicio" }).focus();
+      await page.getByRole("banner").getByRole("link", { name: "VetIA, inicio" }).focus();
       await page.keyboard.press("Tab");
       assert.equal(await page.evaluate(() => document.activeElement?.textContent), "Veterinarias");
       assert.notEqual(await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle), "none");
@@ -85,7 +86,7 @@ try {
       await page.getByRole("link", { name: `Ver ficha de ${clinicName}` }).click();
       await page.getByRole("heading", { name: clinicName }).waitFor();
       await noOverflow(page);
-      assert.equal(await page.getByRole("link", { name: "Llamar a la veterinaria" }).getAttribute("href"), "tel:555123456");
+      assert.equal(await page.getByRole("link", { name: /^Llamar/ }).getAttribute("href"), "tel:555123456");
 
       stage = `${width}px request with Turnstile`;
       const contact = `Contacto de prueba ${width}`;
@@ -101,7 +102,7 @@ try {
       await noOverflow(page);
 
       stage = `${width}px owner navigation and assistant disabled`;
-      await page.getByRole("link", { name: "Mi cuenta", exact: true }).click();
+      await page.getByRole("navigation", { name: "Navegación principal" }).getByRole("link", { name: "Mi cuenta", exact: true }).click();
       await page.getByRole("heading", { name: "Iniciar sesión" }).waitFor();
       await noOverflow(page);
       await page.getByRole("link", { name: "Olvidé mi contraseña" }).click();
@@ -112,16 +113,16 @@ try {
       await noOverflow(page);
       await page.goto(site + "/auth/login");
       await signIn(page, "owner", "/account");
-      await page.getByRole("heading", { name: "Mi cuenta" }).waitFor();
+      await page.getByRole("heading", { name: "Hola, bienvenido a VetIA" }).waitFor();
       await noOverflow(page);
-      await page.getByRole("link", { name: "Abrir mis mascotas" }).click();
+      await page.getByRole("link", { name: "Mis mascotas", exact: true }).click();
       await page.getByRole("heading", { name: "Mis mascotas" }).waitFor();
       await noOverflow(page);
       await page.goto(site + "/account/clinic-applications");
-      await page.getByRole("heading", { name: "Mis solicitudes" }).waitFor();
+      await page.getByRole("heading", { name: "Incorporación de veterinarias" }).waitFor();
       await noOverflow(page);
       await page.goto(site + "/asistente");
-      await page.getByRole("status").filter({ hasText: /temporalmente deshabilitado/ }).waitFor();
+      await page.getByRole("status").filter({ hasText: /Temporalmente deshabilitado/ }).waitFor();
       await noOverflow(page);
       await page.goto(site + "/account");
       await page.getByRole("button", { name: "Cerrar sesión" }).click();
@@ -130,10 +131,10 @@ try {
       stage = `${width}px clinic confirms appointment`;
       await page.goto(site + "/auth/login");
       await signIn(page, "staff", "/clinic");
-      await page.getByRole("link", { name: "Abrir establecimiento" }).click();
-      await page.getByRole("heading", { name: "Panel de clínica" }).waitFor();
+      await page.getByRole("link", { name: "Abrir panel" }).click();
+      await page.getByRole("heading", { name: clinicName }).waitFor();
       await noOverflow(page);
-      await page.getByRole("link", { name: "Abrir solicitudes de cita" }).click();
+      await page.getByRole("link", { name: "Ver citas pendientes" }).click();
       const row = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: contact }) });
       await row.getByText("Registrar horario acordado").click();
       await row.locator("input[name=agreed]").fill(agreed);
@@ -161,7 +162,7 @@ try {
   assert.equal(sql(`select count(*) from public.appointments where clinic_id='${clinic}' and status='confirmed';`), "3");
 } catch (error) {
   console.error("FAIL " + stage + " (" + error.name + ")");
-  if (error.name === "AssertionError") console.error(error.message);
+  console.error(error instanceof Error ? error.stack ?? error.message : String(error));
   process.exitCode = 1;
 } finally {
   if (browser) await browser.close();

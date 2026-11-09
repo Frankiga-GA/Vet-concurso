@@ -11,7 +11,8 @@ export const assistantInput = z.strictObject({
 export const levels = ["urgent", "consult", "clarify", "general"] as const;
 export const topics = ["general", "digestive", "skin", "mobility", "prevention", "outside_scope"] as const;
 export const questions = ["none", "animal", "onset", "change"] as const;
-export const classification = z.strictObject({ level: z.enum(levels), topic: z.enum(topics), question: z.enum(questions) });
+export const intents = ["greeting", "thanks", "capabilities", "symptom", "medication", "general"] as const;
+export const classification = z.strictObject({ level: z.enum(levels), topic: z.enum(topics), question: z.enum(questions), intent: z.enum(intents) });
 export const publicSuggestion = z.object({
   slug: z.string().max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   name: z.string(), city: z.enum(cities),

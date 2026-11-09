@@ -1,11 +1,9 @@
 -- VetIA Phase 1 foundation. Private schema remains excluded from PostgREST.
 begin;
 
-create extension if not exists pgcrypto with schema extensions;
-
-create schema if not exists private;
-revoke all on schema private from public, anon, authenticated;
-grant usage on schema private to authenticated;
+-- Fail on a collision rather than altering a preexisting schema.
+create schema private;
+revoke all on schema private from public, anon, authenticated, service_role;
 
 create type public.application_status as enum (
   'submitted', 'needs_information', 'approved', 'rejected'
@@ -60,7 +58,8 @@ create table public.clinic_applications (
   constraint clinic_applications_phone_length check (char_length(contact_phone) between 6 and 32),
   constraint clinic_applications_decision_consistency check (
     (submission_status in ('approved', 'rejected', 'needs_information') and reviewed_at is not null)
-    or submission_status = 'submitted'
+    or (submission_status = 'submitted' and reviewed_at is null
+      and reviewed_by is null and decision_message is null)
   )
 );
 create index clinic_applications_applicant_created_idx
@@ -87,6 +86,9 @@ create table public.clinics (
   updated_at timestamptz not null default now(),
   constraint clinics_city_allowed check (city in ('Chincha', 'Pisco', 'Ica')),
   constraint clinics_slug_format check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  constraint clinics_operational_requires_approval check (
+    lifecycle_status not in ('active', 'suspended') or approved_at is not null
+  ),
   constraint clinics_publication_requires_eligibility check (
     publication_status <> 'published'
     or (lifecycle_status = 'active' and profile_status = 'complete' and approved_at is not null)
@@ -122,6 +124,13 @@ create table private.clinic_invitations (
   created_at timestamptz not null default now(),
   accepted_at timestamptz,
   constraint clinic_invitation_email_normalized check (email_normalized = lower(btrim(email_normalized))),
+  constraint clinic_invitation_expiry_order check (expires_at > created_at),
+  -- ON DELETE SET NULL may remove the accepting user but preserves the timestamp.
+  constraint clinic_invitation_acceptance_consistency check (
+    (status = 'accepted' and accepted_at is not null
+      and accepted_at >= created_at and accepted_at < expires_at)
+    or (status <> 'accepted' and accepted_at is null and accepted_user_id is null)
+  ),
   constraint clinic_invitation_token_hash_length check (char_length(token_hash) >= 32)
 );
 create unique index clinic_invitations_one_pending_per_email
@@ -274,7 +283,8 @@ create table private.outbox_events (
   constraint outbox_last_error_length check (last_error is null or char_length(last_error) <= 2000),
   constraint outbox_processed_consistency check ((status = 'processed') = (processed_at is not null)),
   constraint outbox_lease_consistency check (
-    (status = 'processing') = (lease_token is not null and lease_expires_at is not null)
+    (status = 'processing' and lease_token is not null and lease_expires_at is not null)
+    or (status <> 'processing' and lease_token is null and lease_expires_at is null)
   )
 );
 create index outbox_events_ready_idx on private.outbox_events (available_at, created_at)
@@ -284,7 +294,7 @@ create index outbox_events_expired_lease_idx on private.outbox_events (lease_exp
 create index outbox_events_aggregate_idx
   on private.outbox_events (aggregate_type, aggregate_id, created_at);
 
-create or replace function private.touch_updated_at()
+create function private.touch_updated_at()
 returns trigger
 language plpgsql
 set search_path = ''
@@ -313,7 +323,7 @@ create trigger owners_touch_updated_at before update on private.owners
 create trigger pets_touch_updated_at before update on private.pets
   for each row execute function private.touch_updated_at();
 
-create or replace function private.is_platform_admin()
+create function private.is_platform_admin()
 returns boolean
 language sql
 stable
@@ -327,7 +337,7 @@ as $$
   );
 $$;
 
-create or replace function private.is_clinic_member(p_clinic_id uuid, p_roles text[] default null)
+create function private.is_clinic_member(p_clinic_id uuid, p_roles text[] default null)
 returns boolean
 language sql
 stable
@@ -336,6 +346,7 @@ set search_path = ''
 as $$
   select exists (
     select 1 from public.clinic_memberships cm
+    join public.clinics c on c.id = cm.clinic_id and c.lifecycle_status = 'active'
     where cm.clinic_id = p_clinic_id
       and cm.user_id = (select auth.uid())
       and cm.status = 'active'
@@ -366,9 +377,10 @@ alter table private.outbox_events enable row level security;
 -- No implicit default grants: establish the least-privilege API surface explicitly.
 revoke all on public.profiles, public.clinic_applications, public.clinics,
   public.clinic_memberships, public.clinic_clients, public.clinic_patients
-  from anon, authenticated;
-revoke all on all tables in schema private from anon, authenticated, public;
-revoke all on all sequences in schema private from anon, authenticated, public;
+  from public, anon, authenticated, service_role;
+revoke all on private.platform_admins, private.clinic_invitations, private.owners,
+  private.pets, private.owner_client_links, private.clinic_pet_links, private.audit_events,
+  private.outbox_events from public, anon, authenticated, service_role;
 
 -- Owner can read own safe profile and update only profile fields.
 grant select (user_id, display_name, phone, created_at, updated_at) on public.profiles to authenticated;
@@ -402,7 +414,8 @@ grant select (clinic_id, id, full_name, phone, email, created_at, updated_at),
   insert (clinic_id, id, full_name, phone, email),
   update (full_name, phone, email)
   on public.clinic_clients to authenticated;
-grant select on public.clinic_patients to authenticated;
+grant select (clinic_id, id, clinic_client_id, name, species, breed, sex, birth_date,
+  status, created_at, updated_at) on public.clinic_patients to authenticated;
 grant insert (clinic_id, id, clinic_client_id, name, species, breed, sex, birth_date, status)
   on public.clinic_patients to authenticated;
 grant update (name, species, breed, sex, birth_date, status)
@@ -429,8 +442,9 @@ create policy clinic_patients_update_tenant on public.clinic_patients for update
 -- Clinics are not directly selectable from the public Data API in Phase 1.
 -- Future public directory uses an explicit safe view/RPC; clinic profile editing is added with Phase 2.
 
--- Safe self-role check for routing. It reveals only the caller's own admin membership.
-create or replace function public.vetia_is_platform_admin()
+-- Role discovery for MFA enrollment/routing only, including at AAL1.
+-- Privileged policies must use private.is_platform_admin(), which requires AAL2.
+create function public.vetia_is_platform_admin()
 returns boolean
 language sql
 stable
@@ -445,7 +459,7 @@ revoke all on function public.vetia_is_platform_admin() from public, anon;
 grant execute on function public.vetia_is_platform_admin() to authenticated;
 
 -- Auth signup creates only a minimal profile; no role or authorization metadata is trusted.
-create or replace function private.handle_new_auth_user()
+create function private.handle_new_auth_user()
 returns trigger
 language plpgsql
 security definer
@@ -474,10 +488,10 @@ create table private.application_reviews (
 create index application_reviews_application_created_idx
   on private.application_reviews (application_id, created_at desc);
 alter table private.application_reviews enable row level security;
-revoke all on private.application_reviews from public, anon, authenticated;
+revoke all on private.application_reviews from public, anon, authenticated, service_role;
 
 -- The application records a stable submission key; retries can safely return the existing row.
-create or replace function public.vetia_submit_clinic_application(
+create function public.vetia_submit_clinic_application(
   p_submission_key uuid,
   p_business_name text,
   p_city text,
@@ -523,7 +537,7 @@ revoke all on function public.vetia_submit_clinic_application(uuid,text,text,tex
 grant execute on function public.vetia_submit_clinic_application(uuid,text,text,text,text,text) to authenticated;
 
 -- Global owner profile is accessed only through self-scoped RPCs, never direct table grants.
-create or replace function public.vetia_upsert_my_owner(p_full_name text, p_phone text default null)
+create function public.vetia_upsert_my_owner(p_full_name text, p_phone text default null)
 returns void
 language plpgsql
 security definer
@@ -551,7 +565,7 @@ $$;
 revoke all on function public.vetia_upsert_my_owner(text,text) from public, anon;
 grant execute on function public.vetia_upsert_my_owner(text,text) to authenticated;
 
-create or replace function public.vetia_list_my_pets()
+create function public.vetia_list_my_pets()
 returns table (id uuid, name text, species text, breed text, sex text, birth_date date, created_at timestamptz)
 language sql
 stable
@@ -568,7 +582,7 @@ $$;
 revoke all on function public.vetia_list_my_pets() from public, anon;
 grant execute on function public.vetia_list_my_pets() to authenticated;
 
-create or replace function public.vetia_create_my_pet(
+create function public.vetia_create_my_pet(
   p_name text, p_species text, p_breed text default null,
   p_sex text default null, p_birth_date date default null
 )

@@ -49,10 +49,11 @@ function DecisionConfirmation({ label, children, enabled, pending, onConfirm }: 
 type Review = Pick<DecisionDraft, "applicationId" | "expectedReviewedAt"> & { userId: string };
 type SubmitAction = (input: DecisionDraft & { operationId: string }) => Promise<DecisionResult>;
 
-export function AdministrativeDecisionPreview({ status, review, submitDecisionAction }: {
+export function AdministrativeDecisionPreview({ status, review, submitDecisionAction, isAccredited = true }: {
   status: (typeof applicationStatuses)[number];
   review?: Review;
   submitDecisionAction?: SubmitAction;
+  isAccredited?: boolean;
 }) {
   const closed = status === "approved" || status === "rejected";
   const enabled = Boolean(review && submitDecisionAction);
@@ -104,11 +105,14 @@ export function AdministrativeDecisionPreview({ status, review, submitDecisionAc
     });
   }
 
-  return <section aria-labelledby="administrative-decision" className="vet-card">
-    <h2 id="administrative-decision" className="text-xl font-semibold">Decisión administrativa</h2>
-    <p className="mt-2 text-sm text-slate-700">{enabled
-      ? "Revisa el mensaje y las notas antes de confirmar. Las notas internas no se comparten con el solicitante."
-      : "Vista previa. Los textos que escribas aquí no se guardan ni se envían."}</p>
+  return <section aria-labelledby="administrative-decision" className="vet-card space-y-3">
+    <div>
+      <p className="vet-eyebrow">Paso 4</p>
+      <h2 id="administrative-decision" className="vet-card-title mt-0.5">Decisión administrativa final</h2>
+      <p className="vet-muted mt-1 text-xs">{enabled
+        ? "Revisa el mensaje y las notas antes de confirmar. La aprobación exige acreditación verificada y MFA reciente."
+        : "Vista previa. Los textos que escribas aquí no se guardan ni se envían."}</p>
+    </div>
     {closed && <p className="mt-2 text-sm font-semibold text-slate-700">Esta solicitud ya tiene una decisión final.</p>}
     {pending && <p role="status" className="mt-3 text-sm text-slate-700">Enviando decisión…</p>}
     {result?.ok === false && <p role="alert" className="mt-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-900">{result.message}</p>}
@@ -118,12 +122,19 @@ export function AdministrativeDecisionPreview({ status, review, submitDecisionAc
     </div>}
     <div aria-busy={pending} className="mt-5 grid gap-3">
       {decisions.map(({ id, label, messageRequired, confirmation }) => {
-        const allowed = !closed && !(status === "needs_information" && id === "request_information");
+        const allowed = !closed
+          && !(status === "needs_information" && id === "request_information")
+          && !(id === "approve" && !isAccredited);
         return <details key={id} className="rounded-2xl border border-slate-200 p-4 sm:p-5">
         <summary className="cursor-pointer font-semibold text-emerald-900 focus-visible:outline-2 focus-visible:outline-emerald-700">{label}</summary>
-        {id === "approve" && <p className="mt-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-950">
-          Para aprobar se exige una acreditación vigente del representante y una verificación TOTP en los últimos diez minutos.
-        </p>}
+        {id === "approve" && <div className="mt-3 space-y-2">
+          <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-950">
+            Para aprobar se exige una acreditación vigente del representante y una verificación TOTP en los últimos diez minutos.
+          </p>
+          {!isAccredited && <p className="rounded-xl bg-amber-50 p-3 text-sm font-medium text-amber-900">
+            ⚠️ Aprobación bloqueada: Debes verificar primero la acreditación oficial (SUNAT, CMVP, SUNARP) en la sección superior.
+          </p>}
+        </div>}
         <fieldset disabled={pending || (enabled && !allowed)} className="mt-4 grid gap-4 sm:grid-cols-2">
           <legend className="sr-only">Borrador de {label.toLowerCase()}</legend>
           <label className="block text-sm font-medium">
@@ -135,7 +146,11 @@ export function AdministrativeDecisionPreview({ status, review, submitDecisionAc
             <textarea ref={(node) => { notes.current[id] = node; }} className={textAreaClass} rows={3} maxLength={4000} autoComplete="off" />
           </label>
         </fieldset>
-        {enabled && !allowed ? <p className="mt-4 text-sm text-slate-700">Esta acción no está disponible para el estado actual.</p>
+        {enabled && !allowed ? <p className="mt-4 text-sm text-slate-700">
+            {id === "approve" && !isAccredited
+              ? "Esta acción requiere verificar previamente la acreditación oficial del establecimiento."
+              : "Esta acción no está disponible para el estado actual."}
+          </p>
           : <DecisionConfirmation label={label} enabled={enabled} pending={pending || waitingForDetail}
               onConfirm={enabled ? () => confirm(id) : undefined}>{confirmation}</DecisionConfirmation>}
         </details>;

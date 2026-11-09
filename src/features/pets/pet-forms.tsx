@@ -43,7 +43,7 @@ function SubmitForm({ action, label, clearOnSuccess = false, children }: {
         {pending ? "Guardando…" : label}
       </button>
     </fieldset>
-    {result && <p role={result.status === "error" ? "alert" : "status"} className={`mt-3 text-sm ${result.status === "error" ? "text-red-800" : "text-emerald-800"}`}>
+    {result && <p role={result.status === "error" ? "alert" : "status"} className={`vet-notice mt-3 text-sm ${result.status === "error" ? "vet-notice-danger" : "vet-notice-info"}`}>
       {result.message}
     </p>}
   </form>;
@@ -53,11 +53,11 @@ export function OwnerForm({ fullName, phone }: { fullName?: string; phone?: stri
   return <SubmitForm action={saveOwner} label="Guardar perfil">
     <label className="block text-sm font-medium">
       Nombre completo
-      <input className={inputClass} name="fullName" autoComplete="name" required minLength={2} maxLength={180} defaultValue={fullName} />
+      <input className={inputClass} name="fullName" autoComplete="name" required minLength={2} maxLength={180} defaultValue={fullName} placeholder="Nombres y apellidos" />
     </label>
     <label className="block text-sm font-medium">
       Teléfono (opcional)
-      <input className={inputClass} name="phone" type="tel" autoComplete="tel" maxLength={32} defaultValue={phone} />
+      <input className={inputClass} name="phone" type="tel" autoComplete="tel" maxLength={32} defaultValue={phone} placeholder="Ej. 987 654 321" />
     </label>
   </SubmitForm>;
 }

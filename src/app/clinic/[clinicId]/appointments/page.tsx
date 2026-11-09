@@ -22,9 +22,9 @@ export default async function AppointmentInbox({ params, searchParams }: {
   const page = typeof filters.pagina === "string" && /^[1-9]\d{0,5}$/.test(filters.pagina) ? Number(filters.pagina) : 1;
   const offset = (page - 1) * pageSize;
   const path = `/clinic/${clinicId}/appointments`;
-  return <main className="vet-shell vet-page space-y-4">
+  return <main className="vet-shell vet-page space-y-6">
     <ClinicNav clinicId={clinicId} current="appointments" profile={membership.role === "clinic_admin"} />
-    <PageIntro title="Solicitudes de cita"><p>Coordina el horario con el propietario antes de confirmar.</p></PageIntro>
+    <div className="grid items-end gap-4 md:grid-cols-[1fr_auto]"><PageIntro title="Solicitudes de cita" label="Agenda de atención"><p>Revisa cada solicitud y confirma únicamente cuando el horario haya sido coordinado con el propietario.</p></PageIntro><span className="vet-kicker">Confirmación manual</span></div>
     <nav className="flex flex-wrap gap-2" aria-label="Estado de cita">
       <Link href={path} aria-current={status === "pending" ? "page" : undefined} className="vet-button vet-filter">Pendientes</Link>
       <Link href={`${path}?estado=confirmed`} aria-current={status === "confirmed" ? "page" : undefined} className="vet-button vet-filter">Confirmadas</Link>
@@ -51,20 +51,19 @@ async function AppointmentResults({ clinicId, supabase, status, page, offset }: 
   const parsed = z.array(appointment).safeParse(data);
   return <>
     {error || !parsed.success ? <Notice tone="danger" role="alert">No se pudo cargar la bandeja. Recarga la página para intentar de nuevo.</Notice>
-      : parsed.data.length === 0 ? <section className="vet-card">
-        <h2 className="font-bold">{page > 1 ? "Esta página está vacía" : `No hay citas ${status === "pending" ? "pendientes" : "confirmadas"}`}</h2>
+      : parsed.data.length === 0 ? <section className="vet-empty">
+        <span className="vet-empty-icon">◷</span><h2 className="font-bold">{page > 1 ? "Esta página está vacía" : `No hay citas ${status === "pending" ? "pendientes" : "confirmadas"}`}</h2>
         {page > 1 ? <Link href={pageUrl(1)} className="vet-link inline-flex min-h-11 items-center">Volver a la primera página</Link>
           : <p className="vet-muted mt-1">Las solicitudes aparecerán aquí cuando tengan este estado.</p>}
       </section>
       : <ul className="grid gap-3">
-        {parsed.data.slice(0, pageSize).map((row) => <li key={row.id} className="vet-card">
+        {parsed.data.slice(0, pageSize).map((row) => <li key={row.id} className="vet-card vet-card-elevated">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="min-w-0 text-lg font-bold wrap-break-word">{row.contact_name}</h2>
             <span className={`vet-badge ${row.status === "pending" ? "vet-badge-pending" : ""}`}>{row.status === "pending" ? "Pendiente" : "Confirmada"}</span>
           </div>
-          <p className="mt-1 text-sm">Teléfono: <a className="vet-link inline-flex min-h-11 items-center" href={`tel:${row.contact_phone}`}>{row.contact_phone}</a></p>
-          <p className="mt-1 text-sm wrap-break-word">Motivo: {row.reason}</p>
-          <p className="mt-1 text-sm">Horario preferido: {limaDateTime.format(new Date(row.preferred_at))}</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2"><div className="vet-stat"><p className="vet-muted text-xs">Contacto</p><a className="vet-link mt-1 inline-flex min-h-8 items-center" href={`tel:${row.contact_phone}`}>{row.contact_phone}</a></div><div className="vet-stat"><p className="vet-muted text-xs">Horario preferido</p><p className="mt-1 font-semibold">{limaDateTime.format(new Date(row.preferred_at))}</p></div></div>
+          <p className="mt-4 text-sm wrap-break-word"><strong>Motivo:</strong> {row.reason}</p>
           <p className="mt-1 break-all text-sm text-slate-600">Referencia: {row.reference}</p>
           {row.agreed_at && <p className="vet-notice vet-notice-info mt-2 font-semibold">Horario acordado: {limaDateTime.format(new Date(row.agreed_at))}</p>}
           {row.status === "pending" && <ConfirmationForm clinicId={clinicId} appointmentId={row.id} />}

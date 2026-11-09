@@ -37,11 +37,12 @@ export function ClinicClientSearch({ clinicId, initial, action }: {
     <div className="mt-4" aria-live="polite">
       {state.message ? <p role="alert" className="vet-notice vet-notice-danger">{state.message}</p>
         : state.rows.length === 0 ? <p className="vet-notice vet-notice-info">{searched ? "No encontramos clientes para esta búsqueda." : "Todavía no hay clientes registrados."}</p>
-        : <ul className="divide-y divide-slate-200">
+        : <ul className="grid gap-3 sm:grid-cols-2">
           {state.rows.slice(0, 50).map((row) => <li key={row.id}>
-            <Link href={`/clinic/${clinicId}/clients/${row.id}`} className="block min-h-11 py-3 wrap-break-word">
-              <span className="font-semibold text-emerald-900 underline">{row.full_name}</span>
-              <span className="block text-sm text-slate-700">{row.phone}</span>
+            <Link href={`/clinic/${clinicId}/clients/${row.id}`} className="vet-card vet-card-action flex min-h-24 items-center gap-3 p-4 wrap-break-word">
+              <span className="vet-icon-tile" aria-hidden="true">◉</span>
+              <span className="min-w-0"><span className="block font-semibold text-[var(--brand)]">{row.full_name}</span>
+              <span className="block text-sm text-[var(--muted)]">{row.phone}</span></span>
             </Link>
           </li>)}
         </ul>}

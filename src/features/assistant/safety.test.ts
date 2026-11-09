@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assistantInput, classification, publicSuggestion } from "./contract";
-import { hasUrgency, minimizePersonalData, renderGuidance } from "./safety";
+import { appetiteFollowUp, appetiteGuidance, hasUrgency, localConversationIntent, minimizePersonalData, renderGuidance } from "./safety";
 
 describe("assistant safeguards", () => {
   it.each([
@@ -19,9 +19,31 @@ describe("assistant safeguards", () => {
     }
   });
   it("keeps model output within predefined guidance and suppresses urgent follow-up questions", () => {
-    expect(classification.safeParse({ level: "general", topic: "skin", question: "none", treatment: "invented" }).success).toBe(false);
-    const reply = renderGuidance({ level: "urgent", topic: "general", question: "animal" });
+    expect(classification.safeParse({ intent: "general", level: "general", topic: "skin", question: "none", treatment: "invented" }).success).toBe(false);
+    const reply = renderGuidance({ intent: "symptom", level: "urgent", topic: "general", question: "animal" });
     expect(reply).toMatchObject({ urgent: true, question: null, clinics: [] });
+  });
+  it("renders safe conversational intents without diagnoses or doses", () => {
+    expect(renderGuidance({ intent: "greeting", level: "general", topic: "general", question: "none" }).text).toContain("Soy VetIA");
+    expect(renderGuidance({ intent: "medication", level: "consult", topic: "general", question: "animal" }).text).toContain("No puedo indicar medicamentos ni dosis");
+    expect(renderGuidance({ intent: "symptom", level: "clarify", topic: "general", question: "animal" }).question).toContain("Desde cuándo");
+  });
+  it("uses already validated natural wording while retaining the local urgent override", () => {
+    const reply = renderGuidance({ intent: "symptom", level: "clarify", topic: "general", question: "animal" }, { text: "Entiendo que te preocupe.", question: "¿Desde cuándo ocurre?" });
+    expect(reply).toMatchObject({ text: "Entiendo que te preocupe.", question: "¿Desde cuándo ocurre?" });
+    expect(renderGuidance({ intent: "symptom", level: "urgent", topic: "general", question: "none" }, { text: "unsafe", question: null }).text).toContain("Busca atención");
+  });
+  it("recognizes local conversational intents before trusting an inconsistent model label", () => {
+    expect(localConversationIntent("Hola")).toBe("greeting");
+    expect(localConversationIntent("Gracias")).toBe("thanks");
+    expect(localConversationIntent("¿Qué puedes hacer?")).toBe("capabilities");
+    expect(localConversationIntent("¿Qué dosis le doy?")).toBe("medication");
+    expect(localConversationIntent("Mi perro no quiere comer")).toBeNull();
+  });
+  it("uses a focused, safe follow-up for appetite changes", () => {
+    expect(appetiteFollowUp("Mi perro no quiere comer")).toContain("bebiendo agua");
+    expect(appetiteGuidance("Mi perro no quiere comer")?.text).toContain("contacta a una veterinaria");
+    expect(appetiteFollowUp("¿Cómo cuido los dientes de mi gato?")).toBeNull();
   });
   it("bounds context and rejects injected roles, cities and unsafe links", () => {
     expect(assistantInput.safeParse({ messages: Array(5).fill("text"), city: null, token: "" }).success).toBe(false);

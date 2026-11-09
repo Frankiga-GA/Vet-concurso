@@ -4,20 +4,32 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const credentialsSchema = z.object({
+const newAccountCredentials = z.object({
   email: z.email().max(254),
   password: z.string().min(10).max(128),
 });
+const registrationDetails = newAccountCredentials.extend({
+  firstName: z.string().trim().min(2).max(80),
+  lastName: z.string().trim().min(2).max(120),
+});
+// Only Auth can determine whether an existing password is valid. The current
+// minimum applies when setting a password, not when verifying an old one.
+const loginCredentials = newAccountCredentials.extend({ password: z.string().min(1).max(128) });
 
-function readCredentials(formData: FormData) {
-  return credentialsSchema.safeParse({
+function readCredentials(formData: FormData, schema: typeof newAccountCredentials) {
+  return schema.safeParse({
     email: String(formData.get("email") ?? "").trim().toLowerCase(),
     password: String(formData.get("password") ?? ""),
   });
 }
 
 export async function registerAction(formData: FormData) {
-  const parsed = readCredentials(formData);
+  const parsed = registrationDetails.safeParse({
+    email: String(formData.get("email") ?? "").trim().toLowerCase(),
+    password: String(formData.get("password") ?? ""),
+    firstName: String(formData.get("firstName") ?? "").trim(),
+    lastName: String(formData.get("lastName") ?? "").trim(),
+  });
   if (!parsed.success) redirect("/auth/register?error=invalid");
 
   let supabase;
@@ -25,15 +37,19 @@ export async function registerAction(formData: FormData) {
   catch { redirect("/auth/register?error=unconfigured"); }
 
   const { error } = await supabase.auth.signUp({
-    ...parsed.data,
-    options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback` },
+    email: parsed.data.email,
+    password: parsed.data.password,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
+      data: { first_name: parsed.data.firstName, last_name: parsed.data.lastName },
+    },
   });
   if (error) redirect("/auth/register?error=signup");
   redirect("/auth/check-email");
 }
 
 export async function loginAction(formData: FormData) {
-  const parsed = readCredentials(formData);
+  const parsed = readCredentials(formData, loginCredentials);
   if (!parsed.success) redirect("/auth/login?error=invalid");
 
   let supabase;

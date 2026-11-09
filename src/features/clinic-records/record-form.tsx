@@ -49,12 +49,12 @@ export function ClinicRecordForm({ recordId, kind, action }: {
         </select>
       </label>}
       {state.message && <p role="alert" className="vet-notice vet-notice-danger text-sm font-semibold">{state.message}</p>}
-      {state.similar && <label className="flex items-start gap-2 text-sm">
+      {state.similar && <label className="vet-notice vet-notice-warning flex items-start gap-2 text-sm">
         <input type="checkbox" name="allowSimilar" value="yes" className="mt-1"
           checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />
         Confirmo que es un registro distinto.
       </label>}
-      <button className="vet-button vet-button-primary">
+      <button className="vet-button vet-button-primary w-full sm:w-auto">
         {pending ? "Guardando…" : patient ? "Registrar paciente" : "Registrar cliente"}
       </button>
     </fieldset>
