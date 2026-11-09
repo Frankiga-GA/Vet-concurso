@@ -5,7 +5,6 @@ import { OwnerForm, PetForm } from "@/features/pets/pet-forms";
 import { requireUser } from "@/lib/auth/session";
 import { EmptyState, Notice, OwnerNav, PageIntro, PublicHeader } from "@/components/vetia-ui";
 import { ownerProfileSchema, petListSchema } from "@/features/pets/contract";
-import { AgroModeSwitcher } from "@/features/agro/agro-components";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +79,7 @@ export default async function PetsPage() {
     <>
       <PublicHeader current="account" />
       <main className="vet-shell vet-page space-y-6">
-        <OwnerNav current="pets" />
+        <OwnerNav current="pets" modality="mascotas" />
         <div className="flex flex-wrap items-start justify-between gap-4">
           <PageIntro title="Mis mascotas" label="Tu familia">
             <p>Consulta sus datos, mantén las fichas al día y registra una nueva mascota cuando la necesites.</p>
@@ -89,9 +88,6 @@ export default async function PetsPage() {
             <button className="vet-button vet-button-secondary">Cerrar sesión</button>
           </form>
         </div>
-
-        {/* Acceso diferenciado Mascotas vs Agro */}
-        <AgroModeSwitcher current="pets" />
 
         <section aria-labelledby="pets-list" className="vet-card space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">

@@ -29,10 +29,26 @@ export async function submitClinicApplication(data: FormData) {
     p_services: application.data.services,
     p_opening_hours: application.data.openingHours,
   });
-  if (error || !id) return { ok: false as const, message: "No pudimos confirmar el envío. Puedes volver a intentarlo con los mismos datos." };
+
+  if (error) {
+    if (error.code === "23505" || error.message?.includes("RUC")) {
+      return {
+        ok: false as const,
+        message: "Ya existe una solicitud activa o una clínica aprobada con este RUC. No se permiten solicitudes duplicadas.",
+      };
+    }
+    return { ok: false as const, message: error.message || "No pudimos confirmar el envío. Puedes volver a intentarlo con los mismos datos." };
+  }
+
+  if (!id) {
+    return { ok: false as const, message: "No pudimos confirmar el envío. Puedes volver a intentarlo con los mismos datos." };
+  }
 
   revalidatePath("/account/clinic-applications");
-  return { ok: true as const, message: "Tu solicitud fue recibida. Puedes consultar su estado en esta página." };
+  return {
+    ok: true as const,
+    message: "Tu solicitud de incorporación fue recibida con éxito. Recuerda que no otorga acceso inmediato ni publica la clínica: adjunta ahora tus documentos de sustento para la verificación por superadministrador.",
+  };
 }
 
 export async function completeClinicApplicationDetails(formData: FormData) {
@@ -62,6 +78,12 @@ export async function completeClinicApplicationDetails(formData: FormData) {
   });
 
   if (error) {
+    if (error.code === "23505" || error.message?.includes("RUC")) {
+      return {
+        ok: false as const,
+        message: "Ya existe una solicitud activa o aprobada con este RUC.",
+      };
+    }
     return { ok: false as const, message: error.message || "No se pudieron guardar los datos." };
   }
 

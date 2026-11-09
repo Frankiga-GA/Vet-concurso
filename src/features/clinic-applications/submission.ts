@@ -17,6 +17,10 @@ const applicationSchema = z.object({
   legalRepresentativeDocument: z.string().trim().regex(/^[A-Za-z0-9-]{8,20}$/, "Ingresa un documento válido de 8 a 20 caracteres."),
   veterinarianName: z.string().trim().min(2, "Ingresa el nombre del veterinario responsable.").max(120, "El nombre admite hasta 120 caracteres."),
   veterinarianLicense: z.string().trim().regex(/^[A-Za-z0-9-]{3,40}$/, "Ingresa una colegiatura válida."),
+  declarationAcknowledged: z.preprocess(
+    (val) => val === "true" || val === "on" || val === true || val === "1",
+    z.boolean()
+  ).refine((val) => val === true, "Debes declarar bajo juramento ser propietario o representante legal autorizado."),
   services: z.array(z.string().trim().min(2).max(80)).min(1, "Incluye al menos un servicio.").max(20, "Incluye hasta 20 servicios.")
     .refine((services) => new Set(services.map((item) => item.toLowerCase())).size === services.length, "No repitas servicios."),
   openingHours: z.array(z.object({ day: z.number().int().min(0).max(6), start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), end: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/) }))
@@ -38,6 +42,7 @@ export function parseApplication(data: FormData) {
     legalRepresentativeDocument: data.get("legalRepresentativeDocument"),
     veterinarianName: data.get("veterinarianName"),
     veterinarianLicense: data.get("veterinarianLicense"),
+    declarationAcknowledged: data.get("declarationAcknowledged"),
     services: String(data.get("services") ?? "").split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean),
     openingHours: (() => {
       try { return JSON.parse(String(data.get("openingHours") ?? "[]")); } catch { return []; }

@@ -15,6 +15,7 @@ function validForm() {
   data.set("legalRepresentativeDocument", "12345678");
   data.set("veterinarianName", " Dr. Carlos Gómez ");
   data.set("veterinarianLicense", "CMVP-12345");
+  data.set("declarationAcknowledged", "true");
   data.set("services", "Consulta general, Vacunación, Cirugía");
   data.set("openingHours", JSON.stringify([{ day: 1, start: "09:00", end: "18:00" }]));
   return data;
@@ -34,6 +35,7 @@ describe("clinic applications", () => {
       legalRepresentativeDocument: "12345678",
       veterinarianName: "Dr. Carlos Gómez",
       veterinarianLicense: "CMVP-12345",
+      declarationAcknowledged: true,
       services: ["Consulta general", "Vacunación", "Cirugía"],
       openingHours: [{ day: 1, start: "09:00", end: "18:00" }],
     });
@@ -52,10 +54,18 @@ describe("clinic applications", () => {
     ["legalRepresentativeDocument", "123"],
     ["veterinarianName", ""],
     ["veterinarianLicense", ""],
+    ["declarationAcknowledged", "false"],
   ])("rejects invalid %s", (field, value) => {
     const data = validForm();
     data.set(field, value);
     expect(parseApplication(data).success).toBe(false);
+  });
+
+  it("requires explicit acknowledgment of sworn declaration of representation", () => {
+    const data = validForm();
+    data.delete("declarationAcknowledged");
+    const result = parseApplication(data);
+    expect(result.success).toBe(false);
   });
 
   it("reuses an unconfirmed key after reloading and rotates it after success", () => {

@@ -70,12 +70,19 @@ export function ClinicNav({ clinicId, current, profile = false }: {
   ]} />;
 }
 
-export function OwnerNav({ current }: { current: "overview" | "profile" | "pets" | "agro" | "applications" }) {
+export function OwnerNav({
+  current,
+  modality = "mascotas",
+}: {
+  current: "overview" | "profile" | "pets" | "agro" | "applications";
+  modality?: "mascotas" | "agro";
+}) {
   return <SectionNav label="Mi espacio en VetIA" items={[
     { href: "/account", label: "Resumen", current: current === "overview" },
     { href: "/account/profile", label: "Mi perfil", current: current === "profile" },
-    { href: "/account/pets", label: "Mis mascotas", current: current === "pets" },
-    { href: "/account/agro", label: "🌾 VetIA Agro", current: current === "agro" },
+    ...(modality === "agro"
+      ? [{ href: "/account/agro", label: "🌾 VetIA Agro", current: current === "agro" }]
+      : [{ href: "/account/pets", label: "🐾 Mis mascotas", current: current === "pets" }]),
     { href: "/account/clinic-applications", label: "Mis solicitudes", current: current === "applications" },
     { href: "/veterinarias", label: "Buscar veterinaria" },
   ]} />;
@@ -119,7 +126,7 @@ export function SiteFooter() {
           <p className="font-bold text-[var(--ink)]">Gestión y salud</p>
           <nav className="mt-3 grid gap-2 text-sm">
             <Link href="/account/pets" className="hover:text-[var(--green)]">Fichas de mis mascotas</Link>
-            <Link href="/account/clinic-applications" className="hover:text-[var(--green)]">Acreditar mi veterinaria</Link>
+            <Link href="/account/clinic-applications" className="hover:text-[var(--green)]">Solicitar incorporación de mi clínica</Link>
             <Link href="/clinic" className="hover:text-[var(--green)]">Portal de clínicas</Link>
             <Link href="/auth/login" className="hover:text-[var(--green)]">Acceso a mi cuenta</Link>
           </nav>

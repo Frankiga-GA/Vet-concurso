@@ -10,9 +10,9 @@ import { EmptyState, Notice, OwnerNav, PageIntro, PublicHeader } from "@/compone
 export const dynamic = "force-dynamic";
 
 const statusLabels = {
-  submitted: "Enviada",
-  needs_information: "Requiere información",
-  approved: "Aprobada",
+  submitted: "Enviada (en revisión documental)",
+  needs_information: "Requiere información o documentos adicionales",
+  approved: "Aprobada por superadmin",
   rejected: "Rechazada",
 };
 
@@ -67,51 +67,162 @@ export default async function ClinicApplicationsPage() {
     }
   }
 
-  return <><PublicHeader current="account" /><main className="vet-shell vet-page space-y-6">
-    <OwnerNav current="applications" />
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <PageIntro title="Incorporación de veterinarias" label="Mi cuenta"><p>Envía una solicitud para sumar tu establecimiento a VetIA y consulta su avance.</p></PageIntro>
-      <form action={logoutAction}><button className="vet-button vet-button-secondary">Cerrar sesión</button></form>
-    </div>
-    <a href="#new-application" className="vet-button vet-button-primary">Registrar una veterinaria</a>
-    <section aria-labelledby="my-applications" className="vet-card space-y-3">
-      <h2 id="my-applications" className="text-xl font-semibold">Mis solicitudes</h2>
-      {error || !applications.success
-        ? <Notice tone="danger" role="alert">No pudimos cargar tus solicitudes. Recarga la página para volver a intentarlo.</Notice>
-        : applications.data.length === 0
-          ? <EmptyState icon="+" title="Aún no tienes solicitudes"><p>Cuando envíes una solicitud, podrás consultar aquí su estado y los mensajes de revisión.</p></EmptyState>
-          : <ul className="mt-4 space-y-3">
-            {applications.data.map((application) => <li key={application.id} className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-[var(--shadow-sm)]">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <h3 className="min-w-0 font-semibold wrap-break-word">{application.business_name}</h3>
-                <span className={`vet-badge ${application.submission_status === "rejected" ? "vet-badge-danger" : application.submission_status === "approved" ? "" : "vet-badge-pending"}`}>
-                  {statusLabels[application.submission_status]}
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-slate-600">
-                {application.city} · <time dateTime={application.submitted_at}>{dateFormatter.format(new Date(application.submitted_at))}</time>
+  return (
+    <>
+      <PublicHeader current="account" />
+      <main className="vet-shell vet-page space-y-6">
+        <OwnerNav current="applications" modality={user.user_metadata?.account_type === "agro" ? "agro" : "mascotas"} />
+
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <PageIntro
+            title="Solicitar incorporación de mi clínica"
+            label="Espacio para profesionales"
+          >
+            <p>
+              Inicia el proceso formal de acreditación declarando tu personería jurídica y aportando los documentos de sustento.
+            </p>
+          </PageIntro>
+          <form action={logoutAction}>
+            <button className="vet-button vet-button-secondary">Cerrar sesión</button>
+          </form>
+        </div>
+
+        {/* Banner de protección y alcance del proceso */}
+        <section className="rounded-2xl border border-amber-300 bg-amber-50/80 p-4 sm:p-5 text-amber-950 shadow-xs">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl select-none">🛡️</span>
+            <div className="space-y-1.5 text-xs sm:text-sm">
+              <h2 className="font-bold text-amber-950">
+                Reglas del proceso de incorporación en VetIA
+              </h2>
+              <p className="text-amber-900 leading-relaxed">
+                Una cuenta de usuario normal <strong>no puede crear ni administrar veterinarias directamente</strong>. Solo puedes solicitar la incorporación declarando ser propietario o representante autorizado y aportando los documentos requeridos.
               </p>
-              {application.decision_message && <p className="mt-2 text-sm wrap-break-word text-slate-700">{application.decision_message}</p>}
-              {application.submission_status === "approved" && <p className="vet-muted mt-2 text-sm">La activación y la publicación de la clínica se gestionan por separado.</p>}
-              {application.submission_status !== "approved" && application.submission_status !== "rejected" && (
-                <CompleteDetailsForm
-                  applicationId={application.id}
-                  initialData={detailsByApp[application.id]}
-                />
-              )}
-              <DocumentUploader
-                applicationId={application.id}
-                documents={docsByApp[application.id] || []}
-                isClosed={application.submission_status === "approved" || application.submission_status === "rejected"}
-              />
-            </li>)}
-          </ul>}
-    </section>
-    <section aria-labelledby="new-application" className="vet-card scroll-mt-28">
-      <p className="vet-eyebrow">Nuevo establecimiento</p>
-      <h2 id="new-application" className="vet-card-title mt-1">Datos para solicitar incorporación</h2>
-      <p className="vet-muted mt-2 text-sm">Revisaremos la información antes de habilitar cualquier acceso operativo o publicación.</p>
-      <ApplicationForm key={user.id} userId={user.id} />
-    </section>
-  </main></>;
+              <ul className="list-disc list-inside space-y-1 pt-1 text-amber-800">
+                <li>
+                  <strong>Sin acceso operativo inmediato:</strong> La solicitud no habilita el panel de clínica ni otorga permisos hasta su aprobación y posterior activación.
+                </li>
+                <li>
+                  <strong>Sin publicación inmediata:</strong> La clínica no aparece en el directorio público hasta completar la revisión documental y la fase de publicación separada.
+                </li>
+                <li>
+                  <strong>Verificación por superadmin:</strong> Es obligatorio adjuntar Ficha RUC en SUNAT, DNI del titular, vigencia de poder y constancia de colegiatura CMVP.
+                </li>
+                <li>
+                  <strong>Unicidad por RUC:</strong> Se impiden solicitudes duplicadas para un mismo RUC.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <div className="flex flex-wrap gap-3">
+          <a href="#new-application" className="vet-button vet-button-primary">
+            Solicitar incorporación de mi clínica
+          </a>
+        </div>
+
+        <section aria-labelledby="my-applications" className="vet-card space-y-3">
+          <h2 id="my-applications" className="text-xl font-semibold text-[var(--ink)]">
+            Mis solicitudes de incorporación
+          </h2>
+          {error || !applications.success ? (
+            <Notice tone="danger" role="alert">
+              No pudimos cargar tus solicitudes. Recarga la página para volver a intentarlo.
+            </Notice>
+          ) : applications.data.length === 0 ? (
+            <EmptyState icon="📋" title="Aún no tienes solicitudes enviadas">
+              <p>
+                Completa el formulario inferior declarando tu condición de titular o representante y adjunta los documentos de sustento para iniciar la revisión.
+              </p>
+            </EmptyState>
+          ) : (
+            <ul className="mt-4 space-y-4">
+              {applications.data.map((application) => (
+                <li
+                  key={application.id}
+                  className="rounded-2xl border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] space-y-3"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <h3 className="min-w-0 font-bold text-lg text-slate-900 wrap-break-word">
+                        {application.business_name}
+                      </h3>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {application.city} · Enviada el{" "}
+                        <time dateTime={application.submitted_at}>
+                          {dateFormatter.format(new Date(application.submitted_at))}
+                        </time>
+                      </p>
+                    </div>
+                    <span
+                      className={`vet-badge ${
+                        application.submission_status === "rejected"
+                          ? "vet-badge-danger"
+                          : application.submission_status === "approved"
+                          ? ""
+                          : "vet-badge-pending"
+                      }`}
+                    >
+                      {statusLabels[application.submission_status]}
+                    </span>
+                  </div>
+
+                  {application.decision_message && (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                      <span className="font-semibold text-slate-900">Mensaje de revisión del superadministrador: </span>
+                      <span className="wrap-break-word">{application.decision_message}</span>
+                    </div>
+                  )}
+
+                  {application.submission_status === "approved" && (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">
+                      <p className="font-bold">✓ Solicitud aprobada por el superadministrador</p>
+                      <p className="mt-0.5 text-emerald-800">
+                        La activación de permisos operativos y la publicación en el directorio se procesan en fases independientes para garantizar la seguridad.
+                      </p>
+                    </div>
+                  )}
+
+                  {application.submission_status !== "approved" &&
+                    application.submission_status !== "rejected" && (
+                      <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-900 space-y-1">
+                        <p className="font-bold text-blue-950">Aporte obligatorio de documentos:</p>
+                        <p className="text-blue-800">
+                          Para avanzar con la revisión, adjunta los 4 sustentos clave: Ficha RUC (SUNAT), DNI del representante, Vigencia de poder (SUNARP) y Constancia de habilidad CMVP.
+                        </p>
+                        <CompleteDetailsForm
+                          applicationId={application.id}
+                          initialData={detailsByApp[application.id]}
+                        />
+                      </div>
+                    )}
+
+                  <DocumentUploader
+                    applicationId={application.id}
+                    documents={docsByApp[application.id] || []}
+                    isClosed={
+                      application.submission_status === "approved" ||
+                      application.submission_status === "rejected"
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section aria-labelledby="new-application" className="vet-card scroll-mt-28">
+          <p className="vet-eyebrow">Formulario formal de incorporación</p>
+          <h2 id="new-application" className="vet-card-title mt-1">
+            Solicitar incorporación de mi clínica
+          </h2>
+          <p className="vet-muted mt-2 text-sm">
+            Completa la información formal del establecimiento y declara tu personería. Deberás adjuntar documentos de sustento. Esta solicitud no otorga acceso inmediato al panel ni publica la clínica en el directorio.
+          </p>
+          <ApplicationForm key={user.id} userId={user.id} />
+        </section>
+      </main>
+    </>
+  );
 }

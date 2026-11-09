@@ -94,7 +94,7 @@ const questions = [
   ],
   [
     "¿Cómo puede una clínica veterinaria incorporarse a VetIA?",
-    "Cualquier clínica formal con RUC y médico veterinario colegiado en la Región Ica puede registrarse, enviar su solicitud de acreditación con documentación de sustento y acceder a un panel privado para recibir solicitudes de pacientes.",
+    "Cualquier clínica formal con RUC y médico veterinario colegiado en la Región Ica puede solicitar su incorporación declarando ser titular o representante autorizado y aportando documentos de sustento (Ficha RUC, DNI, Vigencia de poder y Colegiatura CMVP). La solicitud no concede acceso operativo ni publica la clínica: un superadministrador verifica los documentos antes de su aprobación, activación y publicación.",
   ],
 ];
 
@@ -597,6 +597,10 @@ export default function HomePage() {
                   Únete al directorio regional verificado. Acredita tu RUC y colegiatura CMVP para recibir derivaciones de pacientes, responder consultas y gestionar solicitudes de cita en un panel formal.
                 </p>
 
+                <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-xl p-3 leading-relaxed">
+                  <strong>Aviso de seguridad:</strong> El envío de la solicitud de incorporación no concede acceso operativo inmediato ni publica la clínica. Cada solicitud requiere aportar documentos de personería y colegiatura, siendo verificada rigurosamente por un superadministrador antes de su aprobación, activación y publicación.
+                </p>
+
                 <div className="grid gap-2.5 sm:grid-cols-2 pt-1 text-xs">
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
                     <p className="font-bold text-[var(--ink)]">Acreditación formal</p>
@@ -604,7 +608,7 @@ export default function HomePage() {
                   </div>
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
                     <p className="font-bold text-[var(--ink)]">Panel privado de clínica</p>
-                    <p className="text-[var(--muted)] mt-0.5">Control de solicitudes de cita, clientes registrados e información pública.</p>
+                    <p className="text-[var(--muted)] mt-0.5">Control de solicitudes de cita, clientes registrados e información pública tras ser activada.</p>
                   </div>
                 </div>
 
@@ -613,7 +617,7 @@ export default function HomePage() {
                     href="/account/clinic-applications"
                     className="vet-button vet-button-primary !w-full sm:!w-auto text-xs sm:text-sm px-5 py-2.5"
                   >
-                    Registrar mi veterinaria
+                    Solicitar incorporación de mi clínica
                   </Link>
                   <Link
                     href="/clinic"
