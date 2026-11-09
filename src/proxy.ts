@@ -20,7 +20,7 @@ export async function proxy(request: NextRequest) {
   });
 
   // Refresh session cookies; route handlers/pages still perform authorization.
-  await supabase.auth.getClaims();
+  await supabase.auth.getUser();
   return response;
 }
 
