@@ -1,27 +1,47 @@
-import Link from "next/link";
-import { registerAction, registerWithGoogleAction } from "@/app/auth/actions";
-import { AuthForm, AuthMessage, GoogleAuthButton } from "@/features/auth/auth-form";
+import { Brand } from "@/components/vetia-ui";
+import { RegisterFlow } from "@/features/auth/register-flow";
 
-export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams;
-  return <AuthForm
-    title="Crear cuenta"
-    description="Registra tu correo para guardar las fichas de tus mascotas."
-    action={registerAction}
-    submitLabel="Crear cuenta"
-    headerSlot={<GoogleAuthButton action={registerWithGoogleAction} label="Registrarse con Google" />}
-  >
-    <AuthMessage code={error} />
-    <div className="grid gap-4 sm:grid-cols-2">
-      <label className="block text-sm font-medium">Nombres<input name="firstName" autoComplete="given-name" required minLength={2} maxLength={80} className="vet-field" /></label>
-      <label className="block text-sm font-medium">Apellidos<input name="lastName" autoComplete="family-name" required minLength={2} maxLength={120} className="vet-field" /></label>
-    </div>
-    <label className="block text-sm font-medium">Correo electrónico<input name="email" type="email" autoComplete="email" required maxLength={254} className="vet-field" /></label>
-    <div>
-      <label className="block text-sm font-medium">Contraseña<input name="password" type="password" autoComplete="new-password" required minLength={10} maxLength={128} className="vet-field" aria-describedby="register-password-help" /></label>
-      <p id="register-password-help" className="vet-muted mt-1 text-sm">Usa al menos 10 caracteres.</p>
-    </div>
-    <p className="vet-muted text-sm">Te enviaremos un correo para confirmar tu dirección.</p>
-    <p className="vet-muted text-sm">¿Ya tienes cuenta? <Link className="vet-link" href="/auth/login">Inicia sesión</Link></p>
-  </AuthForm>;
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; tipo?: string }>;
+}) {
+  const { error, tipo } = await searchParams;
+  const initialType =
+    tipo === "agro" || tipo === "agropecuario"
+      ? "agro"
+      : tipo === "mascotas"
+      ? "mascotas"
+      : undefined;
+
+  return (
+    <main className="vet-auth">
+      <div className="vet-auth-shell">
+        <section className="vet-auth-grid">
+          <aside className="vet-auth-aside">
+            <Brand light />
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[.14em] text-emerald-200">Tu espacio VetIA</p>
+              <h2 className="mt-3 text-3xl font-bold leading-tight">
+                El cuidado y sanidad animal, en un solo lugar.
+              </h2>
+              <ul className="mt-6 grid gap-3 text-sm text-emerald-50/85">
+                <li>✓ Mascotas familiares: fichas, triaje y citas</li>
+                <li>✓ VetIA Agro: predios, lotes pecuarios y SENASA</li>
+                <li>✓ Asistente IA especializado 24/7</li>
+                <li>✓ Directorio formal en Chincha, Pisco e Ica</li>
+              </ul>
+            </div>
+            <p className="text-xs text-emerald-100/75">VetIA · Cuidado que conecta</p>
+          </aside>
+          <div className="bg-white">
+            <div className="p-4 md:hidden">
+              <Brand />
+            </div>
+            <RegisterFlow initialError={error} initialType={initialType} />
+          </div>
+        </section>
+      </div>
+    </main>
+  );
 }

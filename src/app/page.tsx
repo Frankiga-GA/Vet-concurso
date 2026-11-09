@@ -350,6 +350,42 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
+
+            {/* VetIA Agro Spotlight Banner */}
+            <div className="rounded-2xl border border-emerald-300 bg-gradient-to-r from-emerald-100/70 via-teal-50/80 to-white p-5 sm:p-7 shadow-xs">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--green)] text-white text-sm font-bold">
+                      🌾
+                    </span>
+                    <h3 className="text-base sm:text-lg font-extrabold text-[var(--green-dark)]">
+                      VetIA Agro: Ganadería y Animales de Producción
+                    </h3>
+                    <span className="rounded-full bg-emerald-200/70 text-emerald-900 text-[10px] font-extrabold px-2 py-0.5">
+                      Nuevo
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-[var(--ink-soft)] max-w-2xl leading-relaxed">
+                    Módulo especializado para predios, lotes y censo pecuario de bovinos, porcinos, ovinos, caprinos y aves. Con triaje de bioseguridad, alertas zoosanitarias SENASA y filtro de veterinarios para producción.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <Link
+                    href="/account/agro"
+                    className="vet-button vet-button-primary !w-full sm:!w-auto text-xs sm:text-sm px-4 py-2.5 font-bold shadow-sm"
+                  >
+                    🌾 Panel VetIA Agro
+                  </Link>
+                  <Link
+                    href="/asistente?mode=agro"
+                    className="vet-button vet-button-secondary !w-full sm:!w-auto text-xs sm:text-sm px-4 py-2.5"
+                  >
+                    Triaje IA Agro
+                  </Link>
+                </div>
+              </div>
+            </div>
           </section>
 
           {/* ======================================================== */}

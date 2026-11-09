@@ -70,11 +70,12 @@ export function ClinicNav({ clinicId, current, profile = false }: {
   ]} />;
 }
 
-export function OwnerNav({ current }: { current: "overview" | "profile" | "pets" | "applications" }) {
+export function OwnerNav({ current }: { current: "overview" | "profile" | "pets" | "agro" | "applications" }) {
   return <SectionNav label="Mi espacio en VetIA" items={[
     { href: "/account", label: "Resumen", current: current === "overview" },
     { href: "/account/profile", label: "Mi perfil", current: current === "profile" },
     { href: "/account/pets", label: "Mis mascotas", current: current === "pets" },
+    { href: "/account/agro", label: "🌾 VetIA Agro", current: current === "agro" },
     { href: "/account/clinic-applications", label: "Mis solicitudes", current: current === "applications" },
     { href: "/veterinarias", label: "Buscar veterinaria" },
   ]} />;

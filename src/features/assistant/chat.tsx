@@ -13,6 +13,7 @@ export function AssistantChat() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [message, setMessage] = useState("");
   const [city, setCity] = useState("");
+  const [mode, setMode] = useState<"mascotas" | "agro">("mascotas");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [failedTurnId, setFailedTurnId] = useState<number>();
@@ -21,14 +22,28 @@ export function AssistantChat() {
   const sending = useRef(false);
   const counter = useRef(0);
   const stickToLatest = useRef(true);
-  const draftUrgent = hasUrgency([message]);
+  const draftUrgent = hasUrgency([message], mode);
   const currentFailed = turns.find((turn) => turn.id === failedTurnId);
 
   useEffect(() => {
-    if (stickToLatest.current) conversation.current?.scrollTo({ top: conversation.current.scrollHeight, behavior: "smooth" });
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramMode = urlParams.get("mode");
+      if (paramMode === "agro") {
+        setMode("agro");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (stickToLatest.current) {
+      conversation.current?.scrollTo({ top: conversation.current.scrollHeight, behavior: "smooth" });
+    }
   }, [turns, pending]);
 
-  function updateTurn(id: number, change: Partial<Turn>) { setTurns((previous) => previous.map((turn) => turn.id === id ? { ...turn, ...change } : turn)); }
+  function updateTurn(id: number, change: Partial<Turn>) {
+    setTurns((previous) => previous.map((turn) => (turn.id === id ? { ...turn, ...change } : turn)));
+  }
 
   async function requestReply(turn: Turn, messages: string[]) {
     if (sending.current) return;
@@ -44,15 +59,15 @@ export function AssistantChat() {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
         signal: AbortSignal.timeout(30000),
-        body: JSON.stringify({ messages, city: city || null }),
+        body: JSON.stringify({ messages, city: city || null, mode }),
       });
       const body = await response.json().catch(() => null);
       const parsed = assistantReply.safeParse(body);
       if (response.ok && parsed.success) {
         updateTurn(turn.id, { reply: parsed.data });
       } else {
-        if (hasUrgency(messages)) {
-          updateTurn(turn.id, { reply: emergencyReply() });
+        if (hasUrgency(messages, mode)) {
+          updateTurn(turn.id, { reply: emergencyReply([], mode) });
         } else {
           updateTurn(turn.id, { failed: true });
           setFailedTurnId(turn.id);
@@ -60,8 +75,8 @@ export function AssistantChat() {
         }
       }
     } catch {
-      if (hasUrgency(messages)) {
-        updateTurn(turn.id, { reply: emergencyReply() });
+      if (hasUrgency(messages, mode)) {
+        updateTurn(turn.id, { reply: emergencyReply([], mode) });
       } else {
         updateTurn(turn.id, { failed: true });
         setFailedTurnId(turn.id);
@@ -91,21 +106,20 @@ export function AssistantChat() {
   }
 
   function retry() {
-    if (currentFailed && !pending) {
-      void requestReply(currentFailed, turns.map((turn) => turn.message).slice(-maxContextMessages));
-    }
+    if (!currentFailed) return;
+    const index = turns.findIndex((turn) => turn.id === currentFailed.id);
+    const messages = turns.slice(0, index + 1).map((turn) => turn.message).slice(-maxContextMessages);
+    void requestReply(currentFailed, messages);
   }
 
   function keyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       form.current?.requestSubmit();
     }
   }
 
   function newConversation() {
-    counter.current = 0;
-    stickToLatest.current = true;
     setTurns([]);
     setMessage("");
     setError("");
@@ -113,22 +127,69 @@ export function AssistantChat() {
   }
 
   return (
-    <section className="vet-chat" aria-label="Asistente VetIA">
+    <section aria-label="Asistente VetIA" className="vet-chat">
       <header className="vet-chat-header">
         <div className="vet-chat-brand">
-          <span className="vet-chat-avatar" aria-hidden="true">✦</span>
+          <span className="vet-chat-avatar" aria-hidden="true">
+            {mode === "agro" ? "🌾" : "✦"}
+          </span>
           <div>
-            <h2>VetIA</h2>
-            <p>Orientación inicial para tu mascota</p>
+            <h2>{mode === "agro" ? "VetIA Agro" : "VetIA Mascotas"}</h2>
+            <p>
+              {mode === "agro"
+                ? "Orientación zoosanitaria y pecuaria"
+                : "Orientación inicial para tu mascota"}
+            </p>
           </div>
         </div>
+
+        {/* Mode Selector & Actions */}
         <div className="vet-chat-header-actions">
-          <Link href="/veterinarias" className="vet-chat-directory">Directorio</Link>
-          <button type="button" className="vet-button vet-button-ghost vet-chat-new" onClick={newConversation} disabled={pending}>
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200/90 bg-slate-50 p-0.5 text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("mascotas");
+                newConversation();
+              }}
+              className={`px-2 py-1 rounded-md font-bold transition ${
+                mode === "mascotas"
+                  ? "bg-[var(--green)] !text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              🐾 Mascotas
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("agro");
+                newConversation();
+              }}
+              className={`px-2 py-1 rounded-md font-bold transition ${
+                mode === "agro"
+                  ? "bg-[var(--green)] !text-white shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              🌾 Agro
+            </button>
+          </div>
+
+          <Link href="/veterinarias" className="vet-chat-directory">
+            Directorio
+          </Link>
+          <button
+            type="button"
+            className="vet-button vet-button-ghost vet-chat-new"
+            onClick={newConversation}
+            disabled={pending}
+          >
             Nueva conversación
           </button>
         </div>
       </header>
+
       <section
         ref={conversation}
         aria-label="Conversación"
@@ -141,21 +202,63 @@ export function AssistantChat() {
       >
         {turns.length === 0 && (
           <div className="vet-chat-welcome">
-            <span className="vet-chat-avatar vet-chat-avatar-large" aria-hidden="true">✦</span>
-            <h3>Hola, soy VetIA</h3>
+            <span className="vet-chat-avatar vet-chat-avatar-large" aria-hidden="true">
+              {mode === "agro" ? "🌾" : "✦"}
+            </span>
+            <h3>{mode === "agro" ? "Hola, soy VetIA Agro" : "Hola, soy VetIA"}</h3>
             <p>
-              Describe lo que le ocurre a tu mascota con tus propias palabras. Te orientaré con empatía y consejos prácticos, y si detecto una urgencia te indicaré dónde acudir de inmediato.
+              {mode === "agro"
+                ? "Describe los signos que notas en tu lote o ganado (bovinos, porcinos, ovinos, caprinos o aves). Te orientaré con criterios técnicos de bioseguridad y, ante sospecha de brotes o enfermedades de reporte obligatorio, te indicaré pautas de aislamiento y reporte a SENASA."
+                : "Describe lo que le ocurre a tu mascota con tus propias palabras. Te orientaré con empatía y consejos prácticos, y si detecto una urgencia te indicaré dónde acudir de inmediato."}
             </p>
+
             <div className="vet-chat-prompts" aria-label="Ejemplos de consulta">
-              <button type="button" onClick={() => setMessage("Mi perro no quiere comer desde ayer")}>
-                Mi perro no quiere comer
-              </button>
-              <button type="button" onClick={() => setMessage("¿Cómo cuido los dientes de mi gato?")}>
-                Cuidado dental de mi gato
-              </button>
+              {mode === "agro" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setMessage("Sospecha de mastitis en vaca lechera con leche grumosa")}
+                  >
+                    🐮 Mastitis en vaca lechera
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMessage("Lote de lechones recién destetados con diarrea acuosa")}
+                  >
+                    🐷 Diarrea en lechones
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMessage("Mortalidad repentina de aves en galpón con cresta morada")}
+                  >
+                    🐔 Alerta sanitaria en aves
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMessage("Protocolo de vacunación contra Carbunco y Fiebre Aftosa")}
+                  >
+                    🌾 Vacunación Aftosa y Carbunco
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button type="button" onClick={() => setMessage("Mi perro no quiere comer desde ayer")}>
+                    Mi perro no quiere comer
+                  </button>
+                  <button type="button" onClick={() => setMessage("¿Cómo cuido los dientes de mi gato?")}>
+                    Cuidado dental de mi gato
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMessage("Mi cachorrito de 3 meses tiene diarrea leve, ¿qué observo?")}>
+                    Diarrea en cachorro
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
+
         {turns.map((turn) => (
           <div key={turn.id} className="vet-chat-turn">
             <div className="vet-chat-message vet-chat-message-user">
@@ -163,11 +266,27 @@ export function AssistantChat() {
               <p>{turn.message}</p>
             </div>
             {turn.reply && (
-              <div className={turn.reply.urgent ? "vet-chat-message vet-chat-message-emergency" : "vet-chat-message vet-chat-message-assistant"}>
-                <span className="vet-chat-avatar" aria-hidden="true">{turn.reply.urgent ? "!" : "✦"}</span>
+              <div
+                className={
+                  turn.reply.urgent
+                    ? "vet-chat-message vet-chat-message-emergency"
+                    : "vet-chat-message vet-chat-message-assistant"
+                }
+              >
+                <span className="vet-chat-avatar" aria-hidden="true">
+                  {turn.reply.urgent ? "!" : mode === "agro" ? "🌾" : "✦"}
+                </span>
                 <div className="vet-chat-content">
-                  <p className="vet-chat-speaker">{turn.reply.urgent ? "Atención inmediata requerida" : "VetIA"}</p>
-                  <div className="vet-chat-prose">
+                  <p className="vet-chat-speaker">
+                    {turn.reply.urgent
+                      ? mode === "agro"
+                        ? "🚨 Alerta Zoosanitaria Requerida"
+                        : "Atención inmediata requerida"
+                      : mode === "agro"
+                      ? "VetIA Agro"
+                      : "VetIA"}
+                  </p>
+                  <div className="vet-chat-prose whitespace-pre-line">
                     {turn.reply.text.split("\n\n").map((paragraph, index) => (
                       <p key={index}>{paragraph}</p>
                     ))}
@@ -219,7 +338,7 @@ export function AssistantChat() {
                   {turn.reply.urgent && turn.reply.clinics.length === 0 && (
                     <div className="vet-chat-no-clinics" role="alert">
                       <p>
-                        <span aria-hidden="true">⚠️</span> <strong>Aviso:</strong> No hay clínicas veterinarias disponibles en el directorio en este momento. Por favor busca atención veterinaria de urgencia de inmediato por otros medios locales (hospital 24 horas o veterinario de guardia).
+                        <span aria-hidden="true">⚠️</span> <strong>Aviso:</strong> No hay clínicas disponibles en el directorio en este momento. Coordina con el puesto de control SENASA más cercano o un médico veterinario colegiado local.
                       </p>
                     </div>
                   )}
@@ -228,7 +347,9 @@ export function AssistantChat() {
             )}
             {turn.failed && (
               <div className="vet-chat-message vet-chat-message-error" role="alert">
-                <span className="vet-chat-avatar" aria-hidden="true">!</span>
+                <span className="vet-chat-avatar" aria-hidden="true">
+                  !
+                </span>
                 <div>
                   <p className="vet-chat-speaker">No se pudo responder</p>
                   <p>{error || genericError}</p>
@@ -242,15 +363,23 @@ export function AssistantChat() {
         ))}
         {pending && (
           <div className="vet-chat-message vet-chat-message-assistant vet-chat-typing" role="status">
-            <span className="vet-chat-avatar" aria-hidden="true">✦</span>
-            <p><span aria-hidden="true">● ● ●</span> VetIA está pensando…</p>
+            <span className="vet-chat-avatar" aria-hidden="true">
+              {mode === "agro" ? "🌾" : "✦"}
+            </span>
+            <p>
+              <span aria-hidden="true">● ● ●</span> {mode === "agro" ? "VetIA Agro está analizando…" : "VetIA está pensando…"}
+            </p>
           </div>
         )}
       </section>
+
       <form ref={form} onSubmit={send} aria-busy={pending} className="vet-chat-composer">
         {draftUrgent && (
           <p role="alert" className="vet-chat-urgent-draft">
-            <strong>Puede ser una urgencia.</strong> Busca atención veterinaria inmediata si tiene dificultad para respirar, convulsiones, sangrado intenso, posible intoxicación o no puede orinar.
+            <strong>{mode === "agro" ? "Alerta zoosanitaria crítica:" : "Puede ser una urgencia."}</strong>{" "}
+            {mode === "agro"
+              ? "Sospecha de cuadro de reporte obligatorio o riesgo vital. Aísla el lote y coordina con SENASA y un médico veterinario."
+              : "Busca atención veterinaria inmediata si tiene dificultad para respirar, convulsiones, sangrado intenso, posible intoxicación o no puede orinar."}
           </p>
         )}
         <details className="vet-chat-options">
@@ -259,12 +388,16 @@ export function AssistantChat() {
             Ciudad
             <select value={city} onChange={(event) => setCity(event.target.value)} className="vet-field">
               <option value="">Sin preferencia</option>
-              {cities.map((name) => <option key={name}>{name}</option>)}
+              {cities.map((name) => (
+                <option key={name}>{name}</option>
+              ))}
             </select>
           </label>
         </details>
         <div className="vet-chat-compose-row">
-          <label className="sr-only" htmlFor="assistant-message">Escribe tu consulta</label>
+          <label className="sr-only" htmlFor="assistant-message">
+            Escribe tu consulta
+          </label>
           <textarea
             id="assistant-message"
             value={message}
@@ -275,7 +408,11 @@ export function AssistantChat() {
             minLength={3}
             maxLength={maxMessageLength}
             rows={1}
-            placeholder="Escribe sobre tu mascota…"
+            placeholder={
+              mode === "agro"
+                ? "Describe el caso en tus vacunos, cerdos, ovinos, caprinos o aves…"
+                : "Escribe sobre tu mascota…"
+            }
             className="vet-field vet-chat-input"
           />
           <button
@@ -290,7 +427,11 @@ export function AssistantChat() {
         <div className="vet-chat-composer-footer">
           <p>{turns.length}/{maxContextMessages} mensajes recientes · No incluyas teléfonos, direcciones ni documentos.</p>
         </div>
-        {error && !currentFailed && <p role="alert" className="vet-chat-help vet-chat-help-error">{error}</p>}
+        {error && !currentFailed && (
+          <p role="alert" className="vet-chat-help vet-chat-help-error">
+            {error}
+          </p>
+        )}
       </form>
     </section>
   );

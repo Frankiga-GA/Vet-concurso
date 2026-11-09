@@ -6,6 +6,7 @@ export const maxContextMessages = 4;
 export const assistantInput = z.strictObject({
   messages: z.array(z.string().trim().min(3).max(maxMessageLength)).min(1).max(maxContextMessages),
   city: z.enum(cities).nullable(),
+  mode: z.enum(["mascotas", "agro"]).optional().default("mascotas"),
   token: z.string().max(2048).optional().default(""),
 });
 export const levels = ["urgent", "consult", "clarify", "general"] as const;

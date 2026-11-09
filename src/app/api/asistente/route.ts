@@ -102,16 +102,16 @@ export async function POST(request: Request) {
 
   const body = assistantInput.safeParse(await boundedJson(request).catch(() => null));
   if (!body.success) return json({ error: "Revisa la longitud y el formato de la consulta." }, 400);
-  const { messages, city } = body.data;
+  const { messages, city, mode = "mascotas" } = body.data;
 
   // Urgent triage detection: provide immediate guidance and clinics without consuming quota
-  if (hasUrgency(messages)) {
+  if (hasUrgency(messages, mode)) {
     const supabase = createClient(config.url, config.publishableKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       global: { fetch: (input, init) => fetch(input, { ...init, cache: "no-store", signal: AbortSignal.timeout(4000) }) },
     });
     const clinics = await fetchUrgentOrSuggestedClinics(supabase as unknown as SupabaseRpcClient, city).catch(() => []);
-    return json(emergencyReply(clinics));
+    return json(emergencyReply(clinics, mode));
   }
 
   // Client IP extraction & rate limiting
@@ -144,7 +144,9 @@ export async function POST(request: Request) {
       return json({ error: "Se alcanzó el límite de consultas para tu cuenta. Intenta más tarde o usa el directorio." }, 429);
     }
 
-    const result = await classifyWithGroq(config.apiKey, config.model, messages.map(minimizePersonalData));
+    const result = mode === "agro"
+      ? await classifyWithGroq(config.apiKey, config.model, messages.map(minimizePersonalData), "agro")
+      : await classifyWithGroq(config.apiKey, config.model, messages.map(minimizePersonalData));
     if (!result.ok) {
       console.warn(`[vetia-assistant] Groq unavailable stage=${result.stage} status=${result.status ?? "none"} reason=${result.reason ?? "none"} detail=${result.detail ?? "none"}`);
       return json({ error: unavailable }, 503);
@@ -152,7 +154,7 @@ export async function POST(request: Request) {
 
     if (result.classification.level === "urgent") {
       const clinics = await fetchUrgentOrSuggestedClinics(supabase as unknown as SupabaseRpcClient, city).catch(() => []);
-      return json(emergencyReply(clinics));
+      return json(emergencyReply(clinics, mode));
     }
 
     const localIntent = localConversationIntent(messages.at(-1) ?? "");
@@ -182,7 +184,7 @@ export async function POST(request: Request) {
       clinics = await fetchUrgentOrSuggestedClinics(supabase as unknown as SupabaseRpcClient, city).catch(() => []);
     }
 
-    const reply = renderGuidance(classification, guidance, clinics);
+    const reply = renderGuidance(classification, guidance, clinics, mode);
     return json(reply);
   } catch (error) {
     console.warn(`[vetia-assistant] internal request failure type=${error instanceof Error ? error.name : "unknown"}`);

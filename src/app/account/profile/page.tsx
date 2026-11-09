@@ -6,7 +6,13 @@ import { requireUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
-const profileSchema = z.object({ first_name: z.string().nullable(), last_name: z.string().nullable(), phone: z.string().nullable(), city: z.string().nullable() });
+const profileSchema = z.object({
+  first_name: z.string().nullable(),
+  last_name: z.string().nullable(),
+  phone: z.string().nullable(),
+  city: z.string().nullable(),
+  account_type: z.string().nullable().optional(),
+});
 
 export default async function MyProfilePage() {
   const { supabase } = await requireUser();
