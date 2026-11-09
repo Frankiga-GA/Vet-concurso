@@ -1,10 +1,16 @@
 import Link from "next/link";
-import { registerAction } from "@/app/auth/actions";
-import { AuthForm, AuthMessage } from "@/features/auth/auth-form";
+import { registerAction, registerWithGoogleAction } from "@/app/auth/actions";
+import { AuthForm, AuthMessage, GoogleAuthButton } from "@/features/auth/auth-form";
 
 export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
-  return <AuthForm title="Crear cuenta" description="Registra tu correo para guardar las fichas de tus mascotas." action={registerAction} submitLabel="Crear cuenta">
+  return <AuthForm
+    title="Crear cuenta"
+    description="Registra tu correo para guardar las fichas de tus mascotas."
+    action={registerAction}
+    submitLabel="Crear cuenta"
+    headerSlot={<GoogleAuthButton action={registerWithGoogleAction} label="Registrarse con Google" />}
+  >
     <AuthMessage code={error} />
     <div className="grid gap-4 sm:grid-cols-2">
       <label className="block text-sm font-medium">Nombres<input name="firstName" autoComplete="given-name" required minLength={2} maxLength={80} className="vet-field" /></label>

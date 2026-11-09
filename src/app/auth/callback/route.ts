@@ -7,6 +7,9 @@ function redirectWithinSite(path: string) {
 }
 
 export async function GET(request: NextRequest) {
+  const authError = request.nextUrl.searchParams.get("error");
+  if (authError) return redirectWithinSite("/auth/login?error=oauth");
+
   const code = request.nextUrl.searchParams.get("code");
   const requestedNext = request.nextUrl.searchParams.get("next");
   const nextPath = requestedNext === "/auth/update-password" ? requestedNext : "/account";

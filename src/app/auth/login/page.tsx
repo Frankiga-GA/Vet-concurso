@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { loginAction } from "@/app/auth/actions";
-import { AuthForm, AuthMessage } from "@/features/auth/auth-form";
+import { loginAction, loginWithGoogleAction } from "@/app/auth/actions";
+import { AuthForm, AuthMessage, GoogleAuthButton } from "@/features/auth/auth-form";
 import { Notice } from "@/components/vetia-ui";
 
 function usesLocalAuth() {
@@ -14,7 +14,13 @@ function usesLocalAuth() {
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
-  return <AuthForm title="Iniciar sesión" description="Accede a tu cuenta VetIA." action={loginAction} submitLabel="Ingresar">
+  return <AuthForm
+    title="Iniciar sesión"
+    description="Accede a tu cuenta VetIA."
+    action={loginAction}
+    submitLabel="Ingresar"
+    headerSlot={<GoogleAuthButton action={loginWithGoogleAction} />}
+  >
     <AuthMessage code={error} />
     {usesLocalAuth() && <Notice>
       <strong>Estás en la demo local.</strong> Las cuentas de DEV y producción no están disponibles aquí. Si aún no tienes una cuenta local, <Link className="vet-link" href="/auth/register">regístrate en esta demo</Link> y confirma el correo en el buzón local.

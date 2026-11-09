@@ -35,4 +35,10 @@ describe("Auth callback", () => {
     const response = await GET(new NextRequest("http://localhost:3000/auth/callback?code=test"));
     expect(response.headers.get("location")).toBe("/auth/login?error=callback");
   });
+
+  it("redirects to login with oauth error if provider returns an error", async () => {
+    const response = await GET(new NextRequest("http://localhost:3000/auth/callback?error=access_denied"));
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("/auth/login?error=oauth");
+  });
 });

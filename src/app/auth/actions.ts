@@ -101,3 +101,35 @@ export async function logoutAction() {
   await supabase.auth.signOut();
   redirect("/");
 }
+
+export async function signInWithGoogleAction(returnTo: string = "/auth/login") {
+  let supabase;
+  try { supabase = await createSupabaseServerClient(); }
+  catch { redirect(`${returnTo}?error=unconfigured`); }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${siteUrl}/auth/callback`,
+      queryParams: {
+        access_type: "offline",
+        prompt: "select_account",
+      },
+    },
+  });
+
+  if (error || !data?.url) {
+    redirect(`${returnTo}?error=oauth`);
+  }
+
+  redirect(data.url);
+}
+
+export async function loginWithGoogleAction() {
+  await signInWithGoogleAction("/auth/login");
+}
+
+export async function registerWithGoogleAction() {
+  await signInWithGoogleAction("/auth/register");
+}
