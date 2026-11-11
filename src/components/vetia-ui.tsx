@@ -80,9 +80,7 @@ export function OwnerNav({
   return <SectionNav label="Mi espacio en VetIA" items={[
     { href: "/account", label: "Resumen", current: current === "overview" },
     { href: "/account/profile", label: "Mi perfil", current: current === "profile" },
-    ...(modality === "agro"
-      ? [{ href: "/account/agro", label: "🌾 VetIA Agro", current: current === "agro" }]
-      : [{ href: "/account/pets", label: "🐾 Mis mascotas", current: current === "pets" }]),
+    { href: "/account/agro", label: "IAVET Agro", current: current === "agro" },
     { href: "/account/clinic-applications", label: "Mis solicitudes", current: current === "applications" },
     { href: "/veterinarias", label: "Buscar veterinaria" },
   ]} />;

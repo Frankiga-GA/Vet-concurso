@@ -13,7 +13,7 @@ export function AssistantChat() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [message, setMessage] = useState("");
   const [city, setCity] = useState("");
-  const [mode, setMode] = useState<"mascotas" | "agro">("mascotas");
+  const [mode, setMode] = useState<"mascotas" | "agro">("agro");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [failedTurnId, setFailedTurnId] = useState<number>();
@@ -131,50 +131,19 @@ export function AssistantChat() {
       <header className="vet-chat-header">
         <div className="vet-chat-brand">
           <span className="vet-chat-avatar" aria-hidden="true">
-            {mode === "agro" ? "🌾" : "✦"}
+            🌾
           </span>
           <div>
-            <h2>{mode === "agro" ? "VetIA Agro" : "VetIA Mascotas"}</h2>
-            <p>
-              {mode === "agro"
-                ? "Orientación zoosanitaria y pecuaria"
-                : "Orientación inicial para tu mascota"}
-            </p>
+            <h2>Asistente IAVET Agro</h2>
+            <p>Orientación zoosanitaria y parámetros de galpón</p>
           </div>
         </div>
 
         {/* Mode Selector & Actions */}
         <div className="vet-chat-header-actions">
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200/90 bg-slate-50 p-0.5 text-xs">
-            <button
-              type="button"
-              onClick={() => {
-                setMode("mascotas");
-                newConversation();
-              }}
-              className={`px-2 py-1 rounded-md font-bold transition ${
-                mode === "mascotas"
-                  ? "bg-[var(--green)] !text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              🐾 Mascotas
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode("agro");
-                newConversation();
-              }}
-              className={`px-2 py-1 rounded-md font-bold transition ${
-                mode === "agro"
-                  ? "bg-[var(--green)] !text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              🌾 Agro
-            </button>
-          </div>
+          <span className="rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-mono font-bold text-emerald-800">
+            🌾 Módulo Agropecuario
+          </span>
 
           <Link href="/veterinarias" className="vet-chat-directory">
             Directorio

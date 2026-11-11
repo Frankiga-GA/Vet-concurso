@@ -16,7 +16,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { error } = await searchParams;
   return <AuthForm
     title="Iniciar sesión"
-    description="Accede a tu cuenta VetIA."
+    description="Accede a tu cuenta de productor en IAVET Agro."
     action={loginAction}
     submitLabel="Ingresar"
     headerSlot={<GoogleAuthButton action={loginWithGoogleAction} />}

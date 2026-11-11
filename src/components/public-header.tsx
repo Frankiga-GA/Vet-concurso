@@ -45,8 +45,7 @@ export function PublicHeader({ current }: { current?: "directory" | "assistant" 
                 : "text-[var(--ink-soft)] hover:bg-emerald-50 hover:text-[var(--green)]"
             }`}
           >
-            <span>🌾</span>
-            <span>VetIA Agro</span>
+            <span>IAVET Agro</span>
           </Link>
           <Link
             href="/account/clinic-applications"
@@ -108,7 +107,6 @@ export function PublicHeader({ current }: { current?: "directory" | "assistant" 
                 current === "directory" ? "bg-[var(--green)] !text-white" : "text-[var(--ink)] hover:bg-emerald-50"
               }`}
             >
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-xs">🏥</span>
               <span>Directorio de veterinarias</span>
             </Link>
             <Link
@@ -118,7 +116,6 @@ export function PublicHeader({ current }: { current?: "directory" | "assistant" 
                 current === "assistant" ? "bg-[var(--green)] !text-white" : "text-[var(--ink)] hover:bg-emerald-50"
               }`}
             >
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-xs font-bold text-emerald-800">✦</span>
               <span>Asistente IA Orientativo</span>
             </Link>
             <Link
@@ -128,23 +125,13 @@ export function PublicHeader({ current }: { current?: "directory" | "assistant" 
                 current === "agro" ? "bg-[var(--green)] !text-white" : "text-[var(--ink)] hover:bg-emerald-50"
               }`}
             >
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-xs">🌾</span>
-              <span>VetIA Agro (Animales de producción)</span>
-            </Link>
-            <Link
-              href="/account/pets"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold text-[var(--ink)] hover:bg-emerald-50 transition"
-            >
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-xs">🐾</span>
-              <span>Fichas de mis mascotas</span>
+              <span>IAVET Agro (Control de Galpones)</span>
             </Link>
             <Link
               href="/account/clinic-applications"
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold text-[var(--ink)] hover:bg-emerald-50 transition"
             >
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-xs">🏢</span>
               <span>Para Veterinarias (Acreditación)</span>
             </Link>
 

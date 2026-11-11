@@ -1,711 +1,1394 @@
+"use client";
+
+import React, { useState, useEffect, useId } from "react";
 import Link from "next/link";
-import { PublicHeader, SiteFooter } from "@/components/vetia-ui";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  Bot,
+  Building2,
+  CheckCircle2,
+  ChevronRight,
+  Cpu,
+  Flame,
+  Gauge,
+  LineChart,
+  MapPin,
+  Menu,
+  PhoneCall,
+  Play,
+  Scan,
+  ScanEye,
+  ShieldCheck,
+  Sparkles,
+  Sun,
+  ThermometerSun,
+  TrendingDown,
+  TrendingUp,
+  Truck,
+  Users,
+  WifiOff,
+  X,
+  Zap,
+} from "lucide-react";
 
-const cities = [
-  {
-    name: "Chincha",
-    slug: "Chincha",
-    description: "Atención de animales menores, medicina preventiva y consultorios verificados.",
-    image: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    name: "Pisco",
-    slug: "Pisco",
-    description: "Red de atención veterinaria costera, urgencias y control sanitario.",
-    image: "https://images.unsplash.com/photo-1537151625747-768eb6cf92b2?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    name: "Ica",
-    slug: "Ica",
-    description: "Centros clínicos integrales, especialidades quirúrgicas y diagnóstico veterinario.",
-    image: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=800&q=80",
-  },
-];
+// ==========================================
+// 1. NAVBAR COMPONENT (LIGHT STICKY GLASSMORPHISM)
+// ==========================================
+function Navbar({ onOpenPilot }: { onOpenPilot: () => void }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-const specialties = [
-  "Consulta general",
-  "Vacunación y desparasitación",
-  "Cirugías y esterilización",
-  "Emergencias 24h",
-  "Profilaxis y odontología",
-  "Dermatología",
-  "Ecografía y rayos X",
-];
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 15);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-const urgentSigns = [
-  {
-    icon: "🫁",
-    title: "Dificultad respiratoria severa",
-    desc: "Respiración acelerada con boca abierta, jadeo continuo en gatos o tos ahogante con encías azuladas.",
-    tag: "Atención urgente",
-  },
-  {
-    icon: "🧪",
-    title: "Ingestión de tóxicos o cuerpos extraños",
-    desc: "Venenos, plantas tóxicas, medicamentos de humanos, chocolate concentrado u objetos no digeribles.",
-    tag: "Riesgo vital",
-  },
-  {
-    icon: "🩸",
-    title: "Hemorragias o traumatismos graves",
-    desc: "Sangrados continuos, atropellos, caídas de altura o sospecha de fracturas con imposibilidad de caminar.",
-    tag: "Derivación inmediata",
-  },
-  {
-    icon: "⚠️",
-    title: "Abdomen distendido y dolor intenso",
-    desc: "Hinchazón abdominal repentina, quejidos de dolor agudo, arqueo de lomo o intentos infructuosos de vómito.",
-    tag: "Alerta quirúrgica",
-  },
-  {
-    icon: "⚡",
-    title: "Convulsiones o desvanecimiento",
-    desc: "Temblores involuntarios repetidos, pérdida del equilibrio, rigidez muscular o desmayo repentino.",
-    tag: "Prioridad médica",
-  },
-  {
-    icon: "💧",
-    title: "Incapacidad para orinar (Anuria)",
-    desc: "Esfuerzos constantes sin micción, dolor vocalizado en la bandeja sanitaria (frecuente y crítico en gatos).",
-    tag: "Emergencia 24h",
-  },
-];
-
-const questions = [
-  [
-    "¿Qué es y cómo funciona el Asistente IA de VetIA?",
-    "Es una herramienta conversacional impulsada por inteligencia artificial especializada en bienestar y salud veterinaria. Te permite describir lo que le ocurre a tu perro o gato, responde tus dudas iniciales, te ayuda a identificar posibles signos de alarma y te orienta sobre los pasos a seguir con calma y serenidad.",
-  ],
-  [
-    "¿La IA de VetIA reemplaza la atención de un médico veterinario?",
-    "No, en ningún caso. VetIA orienta y clasifica inquietudes, pero jamás diagnostica enfermedades ni sustituye el examen físico presencial. El diagnóstico definitivo y el tratamiento corresponden de forma exclusiva a un médico veterinario colegiado (CMVP).",
-  ],
-  [
-    "¿El asistente de inteligencia artificial puede recetar medicamentos o dosis?",
-    "No. Por principios éticos y estricta seguridad animal, VetIA tiene bloqueada cualquier recomendación de medicamentos, fármacos o dosificaciones. Automedicar a una mascota puede provocar intoxicaciones mortales.",
-  ],
-  [
-    "¿Qué ocurre si la IA detecta que mi mascota está en peligro?",
-    "Si la conversación contiene señales de alarma (dificultad respiratoria, convulsiones, vómito continuo o decaimiento severo), el asistente prioriza de inmediato una advertencia de urgencia y te muestra veterinarias reales y activas en tu ciudad con sus contactos directos.",
-  ],
-  [
-    "¿Puedo usar el directorio de veterinarias sin costo?",
-    "Sí. El directorio de veterinarias en Chincha, Pisco e Ica es de libre acceso. Puedes buscar clínicas acreditadas con RUC y colegiatura CMVP, consultar sus servicios y comunicarte directamente con ellas.",
-  ],
-  [
-    "¿Cómo puede una clínica veterinaria incorporarse a VetIA?",
-    "Cualquier clínica formal con RUC y médico veterinario colegiado en la Región Ica puede solicitar su incorporación declarando ser titular o representante autorizado y aportando documentos de sustento (Ficha RUC, DNI, Vigencia de poder y Colegiatura CMVP). La solicitud no concede acceso operativo ni publica la clínica: un superadministrador verifica los documentos antes de su aprobación, activación y publicación.",
-  ],
-];
-
-export default function HomePage() {
   return (
-    <>
-      <PublicHeader />
-
-      <main className="vet-main overflow-x-hidden">
-        <div className="vet-shell vet-page space-y-16 sm:space-y-24 md:space-y-28">
-
-          {/* ======================================================== */}
-          {/* 1. HERO SECTION: LA INTELIGENCIA ARTIFICIAL EN PRIMER PLANO */}
-          {/* ======================================================== */}
-          <section className="relative overflow-hidden rounded-2xl sm:rounded-[2.25rem] border border-[rgb(18_99_77/18%)] bg-gradient-to-br from-[#e4f3eb] via-[#f7fbf8] to-[#f4ede0] p-5 sm:p-10 lg:p-14 shadow-[var(--shadow-md)]">
-            <div className="grid items-center gap-10 lg:grid-cols-[1.08fr_0.92fr]">
-              <div className="space-y-5 sm:space-y-6">
-                
-                {/* AI Badge Pill */}
-                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-800/15 bg-white/95 px-3.5 py-1.5 text-xs font-bold text-[var(--green-dark)] shadow-xs backdrop-blur-sm">
-                  <span className="vet-badge-dot" />
-                  <span className="font-semibold text-emerald-800">✦ Asistente Veterinario Inteligente</span>
-                  <span className="hidden sm:inline text-slate-300">|</span>
-                  <span className="hidden sm:inline text-[var(--muted)] font-normal">Orientación en tiempo real</span>
-                </div>
-
-                {/* Hero Title */}
-                <h1 className="text-3xl font-extrabold tracking-tight text-[var(--ink)] sm:text-5xl lg:text-[3.65rem] leading-[1.08]">
-                  La salud de tu mascota empieza con una conversación.
-                </h1>
-
-                {/* Hero Subtitle */}
-                <p className="max-w-xl text-base sm:text-lg text-[var(--ink-soft)] leading-relaxed">
-                  Conversa con VetIA, recibe orientación inicial sobre tu mascota y encuentra atención veterinaria cuando la necesites.
-                </p>
-
-                {/* Primary & Secondary Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
-                  <Link
-                    href="/asistente"
-                    className="vet-button vet-button-primary !w-full sm:!w-auto text-base px-6 py-3.5 shadow-lg flex items-center justify-center gap-2 group"
-                  >
-                    <span className="text-emerald-200 group-hover:rotate-12 transition-transform">✦</span>
-                    <span className="font-bold">Hablar con VetIA IA</span>
-                    <span className="transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
-                  </Link>
-
-                  <Link
-                    href="/veterinarias"
-                    className="vet-button vet-button-secondary !w-full sm:!w-auto text-base px-5 py-3.5 flex items-center justify-center gap-2"
-                  >
-                    <span>Buscar veterinarias</span>
-                    <span aria-hidden="true">🏥</span>
-                  </Link>
-                </div>
-
-                {/* Safety Guarantee Highlights */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 text-xs font-semibold text-[var(--muted)]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-emerald-700 font-bold">✓</span>
-                    <span>Orientación ética y triaje inicial</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-emerald-700 font-bold">✓</span>
-                    <span>Sin recetas ni medicamentos</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-emerald-700 font-bold">✓</span>
-                    <span>Derivación a clínicas reales</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Hero Visual: Demo interactiva elegante del chat + compañero */}
-              <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
-                {/* Background soft glow */}
-                <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-xl opacity-70" />
-
-                {/* Simulated AI Chat Card */}
-                <div className="relative rounded-2xl border border-emerald-900/15 bg-white/95 p-4 sm:p-5 shadow-xl backdrop-blur-md">
-                  {/* Card Header */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--green)] text-white shadow-sm font-bold text-sm">
-                        ✦
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-xs sm:text-sm font-extrabold text-[var(--ink)] leading-none">VetIA Asistente</p>
-                          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                        </div>
-                        <p className="text-[11px] text-[var(--muted)] mt-0.5">Orientación preventiva y triaje</p>
-                      </div>
-                    </div>
-                    <span className="rounded-full bg-emerald-50 border border-emerald-200/60 px-2.5 py-0.5 text-[10px] font-bold text-[var(--green-dark)]">
-                      Demostración
-                    </span>
-                  </div>
-
-                  {/* Suggestion Chips */}
-                  <div className="flex flex-wrap gap-1.5 py-3 border-b border-slate-100/80">
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] text-slate-700 font-medium">
-                      ¿Qué hacer si mi perro no come?
-                    </span>
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] text-slate-700 font-medium">
-                      ¿Cómo saber si es una emergencia?
-                    </span>
-                  </div>
-
-                  {/* Dialogue Simulation (Clear educational demo, not fake personal claims) */}
-                  <div className="space-y-3 py-3 text-xs sm:text-[13px] leading-relaxed">
-                    {/* User Question */}
-                    <div className="flex justify-end">
-                      <div className="max-w-[85%] rounded-2xl rounded-tr-xs bg-[var(--green)] p-3 text-white shadow-xs">
-                        <p className="text-[11px] font-bold text-emerald-200 mb-0.5">Tú preguntas:</p>
-                        <p>«Mi perro de 2 años vomitó en la mañana y lo veo decaído, ¿qué precauciones debo tomar?»</p>
-                      </div>
-                    </div>
-
-                    {/* AI Response */}
-                    <div className="flex items-start gap-2.5">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-[var(--green)] mt-0.5">
-                        ✦
-                      </div>
-                      <div className="max-w-[90%] space-y-2 rounded-2xl rounded-tl-xs border border-emerald-950/10 bg-[#f8fbf9] p-3 text-[var(--ink)] shadow-xs">
-                        <p className="font-semibold text-emerald-950">
-                          Te ayudo a evaluar el estado de tu mascota:
-                        </p>
-                        <p className="text-slate-700 text-[12px]">
-                          Un episodio aislado puede deberse a indiscreción alimentaria, pero el decaimiento asociado exige vigilar de cerca su evolución.
-                        </p>
-                        <div className="rounded-lg bg-emerald-100/60 p-2 text-[11px] text-emerald-900 border border-emerald-200/50">
-                          <p className="font-bold">⚠️ Observa signos de alarma:</p>
-                          <p className="text-[11px] text-emerald-800">
-                            Vómitos continuos, diarrea con sangre, encías pálidas o dolor al tocar su vientre.
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-between text-[11px] pt-1 text-[var(--muted)]">
-                          <span>Derivación: Consulta médica recomendada</span>
-                          <span className="font-bold text-[var(--green)]">Directorio disponible →</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Simulated Composer Link */}
-                  <div className="pt-2">
-                    <Link
-                      href="/asistente"
-                      className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-500 hover:border-emerald-600 hover:bg-emerald-50/50 hover:text-emerald-900 transition group"
-                    >
-                      <span className="flex items-center gap-2">
-                        <span className="text-slate-400 group-hover:text-emerald-600">✍️</span>
-                        <span>Escribe tu consulta sobre tu mascota...</span>
-                      </span>
-                      <span className="rounded-lg bg-[var(--green)] px-3 py-1 font-bold text-white group-hover:bg-[var(--green-dark)] transition">
-                        Comenzar
-                      </span>
-                    </Link>
-                  </div>
-                </div>
-              </div>
+    <header
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/85 backdrop-blur-xl border-b border-slate-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
+          : "bg-white/60 backdrop-blur-md border-b border-slate-200/50"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        {/* Brand Logo */}
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-md shadow-emerald-700/20 group-hover:scale-105 transition-transform">
+            <ScanEye className="w-6 h-6" />
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-black tracking-tight text-slate-900">
+                IAVET<span className="text-emerald-600 ml-1 font-extrabold">AGRO</span>
+              </span>
+              <span className="text-[10px] uppercase font-mono font-bold tracking-widest px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                B2B Agritech
+              </span>
             </div>
-          </section>
+            <span className="text-[11px] text-slate-500 font-medium tracking-wide">
+              Visión Computacional & IA Avícola
+            </span>
+          </div>
+        </Link>
 
-          {/* ======================================================== */}
-          {/* 2. ASISTENTE IA: PROFUNDIZACIÓN, CAPACIDADES Y SEGURIDAD */}
-          {/* ======================================================== */}
-          <section id="asistente-ia" aria-labelledby="asistente-ia-title" className="space-y-8 sm:space-y-10">
-            <div className="max-w-3xl">
-              <span className="vet-eyebrow">✦ Inteligencia Artificial Responsable</span>
-              <h2 id="asistente-ia-title" className="vet-section-title mt-1.5">
-                Diseñado para orientar, proteger y guiarte con serenidad
-              </h2>
-              <p className="vet-muted mt-2 text-sm sm:text-base leading-relaxed">
-                El asistente de VetIA utiliza modelos de lenguaje avanzados ajustados estrictamente a lineamientos éticos de salud animal. No sustituye al veterinario: te brinda claridad para tomar mejores decisiones a tiempo.
-              </p>
-            </div>
-
-            {/* 3 Core Pillars Grid */}
-            <div className="grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Card 1 */}
-              <div className="vet-card flex flex-col justify-between p-6 border-slate-200/90 shadow-xs">
-                <div className="space-y-3.5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-xl text-[var(--green)] font-bold">
-                    <span>✦</span>
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-[var(--ink)]">Triaje y preguntas clave</h3>
-                  <p className="text-xs sm:text-sm text-[var(--muted)] leading-relaxed">
-                    Te ayuda a identificar los detalles que importan: desde cuándo iniciaron los síntomas, qué señales de incomodidad presenta y cómo describir el cuadro al médico.
-                  </p>
-                </div>
-                <div className="mt-5 pt-3 border-t border-slate-100 text-xs font-semibold text-[var(--green-dark)]">
-                  Estructura tu consulta con orden
-                </div>
-              </div>
-
-              {/* Card 2 */}
-              <div className="vet-card flex flex-col justify-between p-6 border-slate-200/90 shadow-xs">
-                <div className="space-y-3.5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-xl text-amber-700 font-bold">
-                    <span>⚠️</span>
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-[var(--ink)]">Detección de señales críticas</h3>
-                  <p className="text-xs sm:text-sm text-[var(--muted)] leading-relaxed">
-                    Si el asistente detecta términos asociados a asfixia, sangrado, shock o intoxicación, suspende la charla y te pide acudir a urgencias de inmediato sin perder tiempo.
-                  </p>
-                </div>
-                <div className="mt-5 pt-3 border-t border-slate-100 text-xs font-semibold text-amber-800">
-                  Prioridad absoluta a la vida animal
-                </div>
-              </div>
-
-              {/* Card 3 */}
-              <div className="vet-card flex flex-col justify-between p-6 border-slate-200/90 shadow-xs sm:col-span-2 lg:col-span-1">
-                <div className="space-y-3.5">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-xl text-[var(--green)] font-bold">
-                    <span>🏥</span>
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-[var(--ink)]">Derivación a clínicas reales</h3>
-                  <p className="text-xs sm:text-sm text-[var(--muted)] leading-relaxed">
-                    Conecta tus dudas con el directorio regional de Chincha, Pisco e Ica. Te sugiere centros formales con RUC y colegiatura CMVP para una auscultación presencial.
-                  </p>
-                </div>
-                <div className="mt-5 pt-3 border-t border-slate-100 text-xs font-semibold text-[var(--green-dark)]">
-                  Del chat al consultorio veterinario
-                </div>
-              </div>
-            </div>
-
-            {/* Medical Transparency Callout Banner */}
-            <div className="rounded-2xl border border-emerald-800/15 bg-gradient-to-r from-emerald-50 via-teal-50/50 to-white p-5 sm:p-7 shadow-xs">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--green)] text-white text-xs font-bold">
-                      i
-                    </span>
-                    <h4 className="text-sm sm:text-base font-extrabold text-[var(--green-dark)]">
-                      Compromiso ético: Orientación vs. Diagnóstico
-                    </h4>
-                  </div>
-                  <p className="text-xs sm:text-sm text-[var(--ink-soft)] max-w-2xl leading-relaxed">
-                    VetIA no emite recetas médicas, no sugiere dosificaciones ni sustituye el criterio de un médico veterinario colegiado. Toda medicación debe ser autorizada por un profesional habilitado.
-                  </p>
-                </div>
-
-                <Link
-                  href="/asistente"
-                  className="vet-button vet-button-primary !w-full sm:!w-auto text-xs sm:text-sm px-5 py-2.5 shrink-0 shadow-sm"
-                >
-                  Probar el asistente IA
-                </Link>
-              </div>
-            </div>
-
-            {/* VetIA Agro Spotlight Banner */}
-            <div className="rounded-2xl border border-emerald-300 bg-gradient-to-r from-emerald-100/70 via-teal-50/80 to-white p-5 sm:p-7 shadow-xs">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--green)] text-white text-sm font-bold">
-                      🌾
-                    </span>
-                    <h3 className="text-base sm:text-lg font-extrabold text-[var(--green-dark)]">
-                      VetIA Agro: Ganadería y Animales de Producción
-                    </h3>
-                    <span className="rounded-full bg-emerald-200/70 text-emerald-900 text-[10px] font-extrabold px-2 py-0.5">
-                      Nuevo
-                    </span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-[var(--ink-soft)] max-w-2xl leading-relaxed">
-                    Módulo especializado para predios, lotes y censo pecuario de bovinos, porcinos, ovinos, caprinos y aves. Con triaje de bioseguridad, alertas zoosanitarias SENASA y filtro de veterinarios para producción.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                  <Link
-                    href="/account/agro"
-                    className="vet-button vet-button-primary !w-full sm:!w-auto text-xs sm:text-sm px-4 py-2.5 font-bold shadow-sm"
-                  >
-                    🌾 Panel VetIA Agro
-                  </Link>
-                  <Link
-                    href="/asistente?mode=agro"
-                    className="vet-button vet-button-secondary !w-full sm:!w-auto text-xs sm:text-sm px-4 py-2.5"
-                  >
-                    Triaje IA Agro
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ======================================================== */}
-          {/* 3. CÓMO FUNCIONA: DE LA PREGUNTA A LA ACCIÓN */}
-          {/* ======================================================== */}
-          <section
-            id="como-funciona"
-            className="overflow-hidden rounded-2xl sm:rounded-[2.25rem] bg-[var(--green-dark)] p-6 sm:p-10 lg:p-14 text-white shadow-xl"
+        {/* Desktop Navigation Links */}
+        <nav className="hidden md:flex items-center gap-8">
+          <a
+            href="#solucion"
+            className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors"
           >
-            <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-              <div className="space-y-4">
-                <span className="inline-block rounded-full bg-emerald-800/80 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-300">
-                  Paso a paso
-                </span>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight">
-                  Cómo acompaña VetIA a tu mascota
-                </h2>
-                <p className="text-emerald-100/85 text-xs sm:text-sm lg:text-base leading-relaxed">
-                  Un flujo intuitivo que transforma la incertidumbre en orientación fundamentada y acceso directo a veterinarias colegiadas.
-                </p>
-              </div>
+            Solución
+          </a>
+          <a
+            href="#simulador"
+            className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors flex items-center gap-1.5"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Simulador IA
+          </a>
+          <a
+            href="#roi"
+            className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors"
+          >
+            Calculadora ROI
+          </a>
+          <a
+            href="#alianzas"
+            className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors"
+          >
+            Alianzas & Ecosistema
+          </a>
+        </nav>
 
-              <div className="grid gap-4 sm:grid-cols-3">
-                {[
-                  {
-                    step: "01",
-                    title: "Conversa con la IA",
-                    desc: "Describe lo que notas en tu mascota: inapetencia, tos, cambios de ánimo, dudas sobre vacunas o comportamiento.",
-                  },
-                  {
-                    step: "02",
-                    title: "Recibe triaje claro",
-                    desc: "VetIA evalúa los síntomas, formula preguntas para acotar el cuadro y te señala los signos que requieren observación.",
-                  },
-                  {
-                    step: "03",
-                    title: "Encuentra atención",
-                    desc: "Si el caso lo amerita o es urgente, consulta clínicas acreditadas con RUC y colegiatura CMVP en tu ciudad.",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.step}
-                    className="flex flex-col justify-between rounded-xl border border-white/15 bg-white/10 p-5 backdrop-blur-sm"
-                  >
-                    <div>
-                      <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono">{item.step}</span>
-                      <h3 className="mt-2 text-base font-bold text-white">{item.title}</h3>
-                      <p className="mt-1.5 text-xs text-emerald-100/80 leading-relaxed">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
+        {/* Action Buttons */}
+        <div className="hidden md:flex items-center gap-3">
+          <Link
+            href="/auth/login"
+            className="px-4 py-2 text-sm font-bold text-slate-700 hover:text-emerald-800 transition-colors"
+          >
+            Ingresar
+          </Link>
+          <button
+            onClick={onOpenPilot}
+            className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
+          >
+            <Building2 className="w-4 h-4" />
+            <span>Acceso a Granjas</span>
+          </button>
+        </div>
 
-          {/* ======================================================== */}
-          {/* 4. SEÑALES DE URGENCIA: CUÁNDO NO ESPERAR (EDUCACIONAL) */}
-          {/* ======================================================== */}
-          <section id="urgencias" aria-labelledby="urgencias-title" className="space-y-6 sm:space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <div className="max-w-2xl">
-                <span className="vet-eyebrow text-rose-700">Guía de Seguridad Veterinaria</span>
-                <h2 id="urgencias-title" className="vet-section-title mt-1.5 text-slate-900">
-                  ¿Cuándo no esperar? Señales de urgencia veterinaria
-                </h2>
-                <p className="vet-muted mt-2 text-xs sm:text-sm leading-relaxed">
-                  Si tu mascota presenta cualquiera de los siguientes cuadros, no dependas de una consulta virtual ni esperes mejoría espontánea: trasládala de inmediato a un centro veterinario.
-                </p>
-              </div>
+        {/* Mobile menu trigger */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200"
+          aria-label="Abrir menú"
+        >
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
 
+      {/* Mobile Drawer */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden bg-white/95 border-b border-slate-200 backdrop-blur-2xl px-6 py-6 space-y-4"
+          >
+            <a
+              href="#solucion"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-slate-700 hover:text-emerald-700 font-semibold py-2"
+            >
+              Solución
+            </a>
+            <a
+              href="#simulador"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-slate-700 hover:text-emerald-700 font-semibold py-2"
+            >
+              Simulador IA
+            </a>
+            <a
+              href="#roi"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-slate-700 hover:text-emerald-700 font-semibold py-2"
+            >
+              Calculadora ROI
+            </a>
+            <a
+              href="#alianzas"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-slate-700 hover:text-emerald-700 font-semibold py-2"
+            >
+              Alianzas & Ecosistema
+            </a>
+            <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
               <Link
-                href="/veterinarias?service=Emergencias%2024h"
-                className="vet-button vet-button-danger !w-full sm:!w-auto text-xs sm:text-sm px-5 py-2.5 shrink-0 flex items-center justify-center gap-2"
+                href="/auth/login"
+                className="w-full text-center py-2.5 text-sm font-bold text-slate-700 bg-slate-100 rounded-xl"
               >
-                <span>Ver veterinarias de urgencia</span>
-                <span aria-hidden="true">🚨</span>
+                Ingresar a Cuenta
               </Link>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenPilot();
+                }}
+                className="w-full py-2.5 text-sm font-bold text-white bg-emerald-600 rounded-xl shadow-md"
+              >
+                Acceso a Granjas
+              </button>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+}
 
-            {/* Grid of Emergency Signs */}
-            <div className="grid gap-3.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {urgentSigns.map((sign) => (
-                <div
-                  key={sign.title}
-                  className="rounded-2xl border border-rose-200/80 bg-rose-50/40 p-4 sm:p-5 shadow-xs transition hover:border-rose-300"
-                >
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
-                    <span className="text-2xl">{sign.icon}</span>
-                    <span className="rounded-full bg-rose-100 border border-rose-200 px-2 py-0.5 text-[10px] font-bold text-rose-800 uppercase tracking-wider">
-                      {sign.tag}
+// ==========================================
+// 2. HERO SECTION (SPLIT 2-COLUMN + 3D SHOWCASE)
+// ==========================================
+function HeroSection({ onOpenPilot }: { onOpenPilot: () => void }) {
+  const [heroImgSrc, setHeroImgSrc] = useState("/hero-3d-farm.png");
+
+  return (
+    <section className="relative pt-12 pb-20 md:pt-16 md:pb-28 overflow-hidden bg-gradient-to-b from-[#F3F7F4] via-[#F8FAF7] to-white">
+      {/* Organic Light Ambient Accents */}
+      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-emerald-400/10 blur-[130px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-10 left-10 w-[400px] h-[400px] bg-teal-500/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:28px_28px] opacity-[0.06] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          {/* Left Column: Value Prop & Editorial Copy (7 cols) */}
+          <div className="lg:col-span-7 space-y-6 sm:space-y-8 text-left">
+            {/* Pill Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white border border-emerald-200/80 shadow-xs"
+            >
+              <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-mono font-bold tracking-wider text-emerald-800 uppercase">
+                VISIÓN COMPUTACIONAL AVÍCOLA • CHINCHA, PISCO & ICA
+              </span>
+            </motion.div>
+
+            {/* Headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.12]"
+            >
+              Inteligencia Artificial y{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700">
+                Visión Computacional
+              </span>{" "}
+              para la Avicultura.
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-lg sm:text-xl text-slate-600 leading-relaxed max-w-2xl font-normal"
+            >
+              Detecta enfermedades a tiempo, cuenta tu producción automáticamente y
+              maximiza la rentabilidad de tus galpones desde tu celular.
+            </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2"
+            >
+              <button
+                onClick={onOpenPilot}
+                className="px-8 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/40 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-3 group"
+              >
+                <span>Inicia tu Piloto Gratuito</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <a
+                href="#simulador"
+                className="px-8 py-4 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-base border border-slate-300 shadow-xs transition-all flex items-center justify-center gap-3"
+              >
+                <Play className="w-4 h-4 text-emerald-600 fill-emerald-600" />
+                <span>Ver Demo IA en Galpón</span>
+              </a>
+            </motion.div>
+
+            {/* Micro-Metrics Bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.4 }}
+              className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-slate-200/80"
+            >
+              {[
+                { value: "99.4%", label: "Conteo en vivo", icon: Scan },
+                { value: "-3.2%", label: "Mortalidad", icon: TrendingDown },
+                { value: "S/ 8,400+", label: "Ahorro mensual", icon: TrendingUp },
+                { value: "100% Offline", label: "Edge en campo", icon: WifiOff },
+              ].map((stat, i) => (
+                <div key={i} className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-xs">
+                  <div className="flex items-center justify-between text-emerald-600 mb-1">
+                    <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
+                      {stat.value}
+                    </span>
+                    <stat.icon className="w-4 h-4" />
+                  </div>
+                  <div className="text-xs font-semibold text-slate-500">{stat.label}</div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Right Column: 3D Visual & Interactive Device Mockup (5 cols) */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="lg:col-span-5 relative"
+          >
+            {/* 3D Depth Card Container */}
+            <div className="relative rounded-3xl bg-white p-3.5 sm:p-4 shadow-[0_20px_50px_rgba(15,23,42,0.12)] border border-slate-200/90 overflow-visible">
+              {/* Floating Badge Top Left */}
+              <div className="absolute -top-4 -left-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 text-white text-xs font-mono font-bold shadow-lg">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                <span>REC LIVE • CAM-04 ICA SUR</span>
+              </div>
+
+              {/* Floating Badge Top Right */}
+              <div className="absolute -top-3 -right-3 z-20 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-mono font-bold shadow-lg">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>14,820 AVES CENSADAS</span>
+              </div>
+
+              {/* Main Visual Image (3D Render / Modern Poultry Shed) */}
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/70 group">
+                <Image
+                  src={heroImgSrc}
+                  alt="3D Poultry Farm Simulation"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 500px"
+                  priority
+                  className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  onError={() => {
+                    // Fallback to high quality farm photo if generated 3D image isn't available yet
+                    setHeroImgSrc(
+                      "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=1000&q=80"
+                    );
+                  }}
+                />
+
+                {/* Subtitle overlay banner */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent flex flex-col justify-end p-5 text-white">
+                  <div className="flex items-center justify-between text-xs font-mono font-semibold">
+                    <span className="flex items-center gap-1.5 text-emerald-400">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Algoritmo Visión v2.4 Activo
+                    </span>
+                    <span className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-[11px]">
+                      Conteo Exacto 99.4%
                     </span>
                   </div>
-                  <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
-                    {sign.title}
-                  </h3>
-                  <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">
-                    {sign.desc}
-                  </p>
                 </div>
-              ))}
-            </div>
 
-            {/* Emergency Protocol Box */}
-            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:p-6 text-xs sm:text-sm text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <p className="font-extrabold flex items-center gap-1.5">
-                  <span>💡</span>
-                  <span>Consejo vital para emergencias:</span>
-                </p>
-                <p className="text-amber-900 leading-relaxed text-xs sm:text-sm">
-                  Llama por teléfono a la clínica veterinaria mientras te trasladas. De esta forma, el equipo médico puede tener listo el instrumental, oxígeno o suero antes de que llegues.
-                </p>
+                {/* Simulated Green Bounding Box on the Image */}
+                <div className="absolute top-[35%] left-[25%] w-28 h-20 border-2 border-emerald-400 rounded-lg bg-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.5)] flex flex-col justify-between p-1 text-[9px] font-mono font-bold text-white">
+                  <div className="bg-slate-950/80 px-1 rounded flex justify-between">
+                    <span>AVE #4120</span>
+                    <span className="text-emerald-400">99.1%</span>
+                  </div>
+                  <div className="bg-emerald-500 text-slate-950 font-black px-1 rounded flex justify-between">
+                    <span>SANA</span>
+                    <span>2.19 kg</span>
+                  </div>
+                </div>
+
+                {/* Simulated Amber Alert Box on the Image */}
+                <div className="absolute bottom-[28%] right-[22%] w-32 h-24 border-2 border-amber-400 rounded-lg bg-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.5)] flex flex-col justify-between p-1 text-[9px] font-mono font-bold text-white">
+                  <div className="bg-slate-950/80 px-1 rounded flex justify-between text-amber-300">
+                    <span>AVE #4128</span>
+                    <span>ALERTA</span>
+                  </div>
+                  <div className="bg-amber-500 text-slate-950 font-black px-1 rounded text-[8px]">
+                    ESTRÉS TÉRMICO (31.8°C)
+                  </div>
+                </div>
               </div>
 
-              <Link
-                href="/asistente"
-                className="vet-button vet-button-secondary !w-full sm:!w-auto text-xs sm:text-sm px-4 py-2 shrink-0 bg-white"
-              >
-                Consultar dudas en VetIA
-              </Link>
-            </div>
-          </section>
-
-          {/* ======================================================== */}
-          {/* 5. DIRECTORIO VETERINARIO: CLÍNICAS REALES EN TU CIUDAD */}
-          {/* ======================================================== */}
-          <section id="directorio" aria-labelledby="directorio-title" className="space-y-6 sm:space-y-8">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="vet-eyebrow">Red de atención presencial</p>
-                <h2 id="directorio-title" className="vet-section-title mt-1">
-                  Encuentra veterinarias verificadas cerca de ti
-                </h2>
-                <p className="vet-muted mt-1 text-xs sm:text-sm">
-                  Establecimientos con RUC activo y médicos colegiados en la Región Ica.
-                </p>
+              {/* Bottom Floating Telemetry Strip */}
+              <div className="mt-3.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-slate-700 font-semibold">
+                  <ThermometerSun className="w-4 h-4 text-amber-600" />
+                  <span>Temp Galpón: <strong>31.4°C</strong></span>
+                </div>
+                <span className="text-slate-400">|</span>
+                <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Ventilación Túnel: Activa</span>
+                </div>
               </div>
-              <Link
-                href="/veterinarias"
-                className="vet-link text-xs sm:text-sm font-bold flex items-center gap-1.5"
-              >
-                <span>Explorar todo el directorio</span>
-                <span aria-hidden="true">→</span>
-              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ==========================================
+// 3. COMPUTER VISION SIMULATOR (WITH REAL FARM CAMERA PHOTO)
+// ==========================================
+function ComputerVisionSimulator() {
+  const [activeTab, setActiveTab] = useState<"conteo" | "sanitaria" | "clima">("conteo");
+  const [currentTime, setCurrentTime] = useState("11:32:08");
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      setCurrentTime(now.toTimeString().split(" ")[0]);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <section id="simulador" className="py-20 md:py-28 relative bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Heading */}
+        <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-mono font-bold uppercase">
+            <Cpu className="w-3.5 h-3.5 text-emerald-600" />
+            El Diferenciador Técnico
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+            Simulador de Visión Computacional
+          </h2>
+          <p className="text-slate-600 text-base sm:text-lg">
+            Monitoreo continuo de galpones mediante cámaras estándar y modelos de Edge
+            AI entrenados para la avicultura de la costa sur peruana.
+          </p>
+        </div>
+
+        {/* Industrial AI Console Box */}
+        <div className="rounded-3xl bg-slate-950 p-4 sm:p-6 shadow-2xl border border-slate-800">
+          {/* Top Control Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800 px-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-red-500/20 border border-red-500/40 text-red-400 text-xs font-mono font-bold">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                <span>REC • LIVE FEED</span>
+              </div>
+              <div className="text-xs font-mono text-slate-300 hidden sm:block">
+                GALPÓN ICA SUR — LOTE ENGORDE #04
+              </div>
             </div>
 
-            {/* City Cards */}
-            <div className="grid gap-4 sm:gap-6 sm:grid-cols-3">
-              {cities.map((city) => (
-                <Link
-                  key={city.slug}
-                  href={`/veterinarias?city=${city.slug}`}
-                  className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 bg-white shadow-xs transition hover:-translate-y-1 hover:shadow-md"
+            {/* Mode Switcher Tabs */}
+            <div className="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800">
+              <button
+                onClick={() => setActiveTab("conteo")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeTab === "conteo"
+                    ? "bg-emerald-500 text-slate-950 shadow-md"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <Scan className="w-3.5 h-3.5" />
+                Conteo Continuo
+              </button>
+              <button
+                onClick={() => setActiveTab("sanitaria")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeTab === "sanitaria"
+                    ? "bg-emerald-500 text-slate-950 shadow-md"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5" />
+                Detección Sanitaria
+              </button>
+              <button
+                onClick={() => setActiveTab("clima")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeTab === "clima"
+                    ? "bg-emerald-500 text-slate-950 shadow-md"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <Flame className="w-3.5 h-3.5" />
+                Estrés Térmico
+              </button>
+            </div>
+
+            {/* Camera Metrics */}
+            <div className="hidden lg:flex items-center gap-4 text-xs font-mono text-slate-400">
+              <span>60 FPS</span>
+              <span>4K UHD</span>
+              <span>LATENCIA: 14ms</span>
+              <span className="text-emerald-400 font-bold">{currentTime} UTC-5</span>
+            </div>
+          </div>
+
+          {/* Grid: Camera Viewport + Telemetry Panel */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
+            {/* Viewport with REAL poultry shed photo */}
+            <div className="lg:col-span-3 relative aspect-[16/9] sm:aspect-[16/10] bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center">
+              {/* Real Poultry Barn Photo as Camera Feed Background */}
+              <Image
+                src="https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=1200&q=80"
+                alt="Flock camera feed"
+                fill
+                sizes="(max-width: 1024px) 100vw, 900px"
+                className="object-cover opacity-80"
+              />
+
+              {/* Dark subtle overlay for high contrast bounding boxes */}
+              <div className="absolute inset-0 bg-slate-950/30" />
+
+              {/* Animated Laser Scanning Line */}
+              <motion.div
+                animate={{ y: ["0%", "100%", "0%"] }}
+                transition={{ duration: 4.5, repeat: Infinity, ease: "linear" }}
+                className="absolute left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_15px_#10b981] z-20 pointer-events-none"
+              />
+
+              {/* Simulated Bounding Boxes */}
+              <div className="absolute inset-0 p-8 flex items-center justify-center">
+                {/* Box 1: Healthy bird */}
+                <motion.div
+                  initial={{ scale: 0.96 }}
+                  animate={{ scale: [0.98, 1.02, 0.98] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="absolute top-[28%] left-[24%] w-32 h-24 border-2 border-emerald-400 rounded-lg bg-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.4)] z-10 flex flex-col justify-between p-1.5"
                 >
-                  <div className="aspect-[16/10] overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={city.image}
-                      alt={`Veterinarias en ${city.name}`}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
+                  <div className="flex justify-between items-start text-[9px] font-mono font-bold bg-slate-950/90 px-1 py-0.5 rounded text-emerald-300">
+                    <span>AVE #4812</span>
+                    <span>99.4%</span>
                   </div>
-                  <div className="p-4 sm:p-5">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg sm:text-xl font-bold text-[var(--ink)]">{city.name}</h3>
-                      <span className="text-xs font-semibold text-[var(--green)] group-hover:underline">Ver clínicas →</span>
+                  <div className="text-[9px] font-mono bg-emerald-500 text-slate-950 font-extrabold px-1 rounded flex justify-between">
+                    <span>SANA</span>
+                    <span>2.18 kg</span>
+                  </div>
+                </motion.div>
+
+                {/* Box 2: Healthy bird */}
+                <motion.div
+                  initial={{ scale: 0.98 }}
+                  animate={{ scale: [1, 0.97, 1] }}
+                  transition={{ duration: 3.5, repeat: Infinity }}
+                  className="absolute bottom-[26%] left-[46%] w-36 h-28 border-2 border-emerald-400 rounded-lg bg-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.4)] z-10 flex flex-col justify-between p-1.5"
+                >
+                  <div className="flex justify-between items-start text-[9px] font-mono font-bold bg-slate-950/90 px-1 py-0.5 rounded text-emerald-300">
+                    <span>AVE #4819</span>
+                    <span>98.9%</span>
+                  </div>
+                  <div className="text-[9px] font-mono bg-emerald-500 text-slate-950 font-extrabold px-1 rounded flex justify-between">
+                    <span>SANA</span>
+                    <span>2.24 kg</span>
+                  </div>
+                </motion.div>
+
+                {/* Box 3: Alert Box (Thermal Stress / Postration) */}
+                <motion.div
+                  animate={{
+                    borderColor:
+                      activeTab === "clima"
+                        ? ["#f59e0b", "#ef4444", "#f59e0b"]
+                        : activeTab === "sanitaria"
+                        ? ["#ef4444", "#dc2626", "#ef4444"]
+                        : ["#10b981", "#10b981", "#10b981"],
+                  }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="absolute top-[36%] right-[22%] w-40 h-32 border-2 rounded-lg bg-slate-900/70 z-20 flex flex-col justify-between p-2 shadow-xl"
+                >
+                  <div className="flex justify-between items-start text-[9px] font-mono font-bold bg-slate-950/90 px-1.5 py-0.5 rounded text-amber-400">
+                    <span className="flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3 text-amber-400 animate-pulse" />
+                      AVE #4830
+                    </span>
+                    <span>97.2%</span>
+                  </div>
+
+                  {activeTab === "clima" ? (
+                    <div className="space-y-0.5 bg-amber-500/30 border border-amber-500/50 p-1.5 rounded text-[9px] font-mono text-amber-100">
+                      <div className="font-bold flex items-center justify-between">
+                        <span>ESTRÉS TÉRMICO</span>
+                        <span>32.6°C</span>
+                      </div>
+                      <div className="text-[8px] text-amber-200">Jadeo detectado en zona B</div>
                     </div>
-                    <p className="mt-1.5 text-xs text-[var(--muted)] leading-relaxed">
-                      {city.description}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                  ) : activeTab === "sanitaria" ? (
+                    <div className="space-y-0.5 bg-red-500/30 border border-red-500/50 p-1.5 rounded text-[9px] font-mono text-red-100">
+                      <div className="font-bold flex items-center justify-between">
+                        <span>POSTRACIÓN ANÓMALA</span>
+                        <span>ALERTA</span>
+                      </div>
+                      <div className="text-[8px] text-red-200">Inmovilidad &gt; 18 min</div>
+                    </div>
+                  ) : (
+                    <div className="text-[9px] font-mono bg-emerald-500 text-slate-950 font-bold px-1 rounded flex justify-between">
+                      <span>CENSO VINCULADO</span>
+                      <span>2.11 kg</span>
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+
+              {/* Bottom HUD Bar in Camera Feed */}
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-slate-300">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1.5 text-emerald-400">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    AI ENGINE: ACTIVO
+                  </span>
+                  <span className="text-slate-600">|</span>
+                  <span>AVES VISIBLES: 42 EN CUADRO</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded bg-white/10 text-[10px]">
+                    FOV 110° WIDE
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] border border-emerald-500/30">
+                    ICA_ALGORITMO_V3
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Specialty Tags */}
-            <div className="rounded-xl sm:rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-4 sm:p-6">
-              <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
-                Búsquedas frecuentes por servicio clínico:
+            {/* Side Telemetry Panel */}
+            <div className="space-y-3 flex flex-col justify-between">
+              {/* Metric Card 1 */}
+              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                  <span>Total Aves Censadas</span>
+                  <Scan className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-white font-mono">
+                  14,820
+                </div>
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Conteo exacto 99.4% lote #04</span>
+                </div>
+              </div>
+
+              {/* Metric Card 2 */}
+              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                  <span>Índice de Dispersión</span>
+                  <Gauge className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div className="text-xl font-black text-white">Uniforme (94.2%)</div>
+                <div className="text-xs text-slate-400 mt-1">
+                  Densidad: 14.1 aves/m² en galpón túnel
+                </div>
+              </div>
+
+              {/* Metric Card 3 */}
+              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                  <span>Alerta de Estrés Térmico</span>
+                  <ThermometerSun className="w-4 h-4 text-amber-400" />
+                </div>
+                <div className="text-xl font-black text-amber-400">2 alertas leves</div>
+                <div className="text-xs text-slate-400 mt-1">
+                  Zona B: 31.8°C (Ventilación túnel activa)
+                </div>
+              </div>
+
+              {/* Quick Action Button */}
+              <a
+                href="#roi"
+                className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+              >
+                <span>Calcular Ahorro en tu Galpón</span>
+                <ChevronRight className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ==========================================
+// 4. B2B ROI CALCULATOR (CLEAN LIGHT CARD)
+// ==========================================
+function ProfitabilityCalculator({ onOpenPilot }: { onOpenPilot: () => void }) {
+  const [birdCount, setBirdCount] = useState<number>(25000);
+  const [feedCostTon, setFeedCostTon] = useState<number>(1950);
+  const [currentMortality, setCurrentMortality] = useState<number>(6.5);
+
+  const birdSliderId = useId();
+  const feedCostSliderId = useId();
+  const mortalitySliderId = useId();
+
+  // Dynamic calculations based on Peruvian poultry benchmarks
+  const feedKgPerBirdPerCycle = 4.2;
+  const feedCostPerKg = feedCostTon / 1000;
+  const feedSavingMonthly = ((birdCount * feedKgPerBirdPerCycle * 0.04) * feedCostPerKg) / 1.5;
+
+  const mortalityDropPercent = Math.min(currentMortality * 0.45, 3.2);
+  const birdsSavedPerCycle = Math.round((birdCount * mortalityDropPercent) / 100);
+  const valuePerBirdSol = 16.5;
+  const mortalitySavingMonthly = (birdsSavedPerCycle * valuePerBirdSol) / 1.5;
+
+  const totalMonthlySavings = Math.round(feedSavingMonthly + mortalitySavingMonthly);
+  const totalAnnualSavings = totalMonthlySavings * 12;
+
+  return (
+    <section id="roi" className="py-20 md:py-28 relative bg-[#F9FAF8]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Heading */}
+        <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-mono font-bold uppercase">
+            <LineChart className="w-3.5 h-3.5 text-emerald-600" />
+            Impacto Económico Medible
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+            Calculadora de Rentabilidad B2B
+          </h2>
+          <p className="text-slate-600 text-base sm:text-lg">
+            Estima el retorno de inversión mensual al incorporar visión artificial y
+            sensores en la crianza de tus aves.
+          </p>
+        </div>
+
+        {/* Main Card */}
+        <div className="max-w-5xl mx-auto rounded-3xl bg-white border border-slate-200 p-6 sm:p-10 shadow-xl">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left Inputs (7 cols) */}
+            <div className="lg:col-span-7 space-y-6">
+              <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                Parámetros de tu Operación
+              </h3>
+
+              {/* Slider 1: Bird Count */}
+              <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                <div className="flex justify-between items-center">
+                  <label htmlFor={birdSliderId} className="text-sm font-semibold text-slate-700">
+                    Cantidad de Aves por Lote
+                  </label>
+                  <span className="text-lg font-mono font-bold text-emerald-700">
+                    {birdCount.toLocaleString("es-PE")} aves
+                  </span>
+                </div>
+                <input
+                  id={birdSliderId}
+                  type="range"
+                  min={5000}
+                  max={100000}
+                  step={1000}
+                  value={birdCount}
+                  onChange={(e) => setBirdCount(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                />
+                <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                  <span>5,000</span>
+                  <span>50,000</span>
+                  <span>100,000</span>
+                </div>
+              </div>
+
+              {/* Slider 2: Feed Cost per Ton */}
+              <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                <div className="flex justify-between items-center">
+                  <label htmlFor={feedCostSliderId} className="text-sm font-semibold text-slate-700">
+                    Costo de Alimento Balanceado (S/ por Tonelada)
+                  </label>
+                  <span className="text-lg font-mono font-bold text-emerald-700">
+                    S/ {feedCostTon.toLocaleString("es-PE")}
+                  </span>
+                </div>
+                <input
+                  id={feedCostSliderId}
+                  type="range"
+                  min={1400}
+                  max={2800}
+                  step={50}
+                  value={feedCostTon}
+                  onChange={(e) => setFeedCostTon(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                />
+                <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                  <span>S/ 1,400</span>
+                  <span>S/ 2,100</span>
+                  <span>S/ 2,800</span>
+                </div>
+              </div>
+
+              {/* Slider 3: Current Mortality */}
+              <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                <div className="flex justify-between items-center">
+                  <label htmlFor={mortalitySliderId} className="text-sm font-semibold text-slate-700">
+                    Mortalidad Histórica Actual del Lote
+                  </label>
+                  <span className="text-lg font-mono font-bold text-emerald-700">
+                    {currentMortality.toFixed(1)}%
+                  </span>
+                </div>
+                <input
+                  id={mortalitySliderId}
+                  type="range"
+                  min={3.0}
+                  max={12.0}
+                  step={0.5}
+                  value={currentMortality}
+                  onChange={(e) => setCurrentMortality(Number(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                />
+                <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                  <span>3.0% (Excelente)</span>
+                  <span>6.5% (Promedio Ica)</span>
+                  <span>12.0% (Crítico)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Output: Dynamic Block (5 cols) */}
+            <div className="lg:col-span-5 rounded-2xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-950 text-white p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-xl">
+              <div>
+                <span className="text-xs font-mono font-bold tracking-wider text-emerald-300 uppercase block mb-1">
+                  Beneficio Proyectado IAVET
+                </span>
+                <div className="text-xs text-emerald-100/80">
+                  Ahorro estimado en alimento y preservación de aves
+                </div>
+              </div>
+
+              {/* Highlight Dynamic Monthly Number */}
+              <div className="space-y-1">
+                <div className="text-xs font-mono text-emerald-200 uppercase">
+                  Ahorro Estimado Mensual
+                </div>
+                <motion.div
+                  key={totalMonthlySavings}
+                  initial={{ scale: 0.95, opacity: 0.8 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-4xl sm:text-5xl font-black text-emerald-300 font-mono tracking-tight"
+                >
+                  S/ {totalMonthlySavings.toLocaleString("es-PE")}
+                </motion.div>
+                <div className="text-xs text-emerald-200/80">
+                  ≈ S/ {totalAnnualSavings.toLocaleString("es-PE")} al año
+                </div>
+              </div>
+
+              {/* Key Indicators */}
+              <div className="space-y-3 pt-3 border-t border-white/20">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-emerald-100">Reducción de Mortalidad:</span>
+                  <span className="font-bold text-white font-mono">
+                    -{mortalityDropPercent.toFixed(1)}% (≈ {birdsSavedPerCycle} aves)
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-emerald-100">Optimización Conversión (FCR):</span>
+                  <span className="font-bold text-emerald-300 font-mono">+6.8% eficiencia</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-emerald-100">Retorno de Inversión (ROI):</span>
+                  <span className="font-bold text-emerald-200 font-mono">3.8x en 60 días</span>
+                </div>
+              </div>
+
+              {/* Call to action */}
+              <button
+                onClick={onOpenPilot}
+                className="w-full py-3.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
+              >
+                <span>Solicitar Estudio de Viabilidad</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ==========================================
+// 5. KEY FEATURES (3-COLUMN LIGHT GRID WITH VISUAL IMAGERY)
+// ==========================================
+function KeyFeatures() {
+  const features = [
+    {
+      icon: ThermometerSun,
+      image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80",
+      title: "Alerta Climática Preventiva",
+      desc: "Recibe alertas por olas de calor en Ica antes de que afecten a tu lote. Modelos predictivos que anticipan picos térmicos para accionar nebulizadores y ventilación túnel con hasta 3 horas de ventaja.",
+      highlight: "Evita pérdidas de hasta S/ 15,000 en días críticos de verano.",
+      tag: "Vigilancia Térmica Ica",
+    },
+    {
+      icon: WifiOff,
+      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
+      title: "Funcionamiento Offline",
+      desc: "Diseñado para el campo. IAVET guarda tus registros sin internet y se sincroniza automáticamente. La IA corre en hardware Edge instalado en el galpón sin depender de cobertura celular o fibra óptica.",
+      highlight: "Cero pérdida de telemetría ante caídas de señal rural.",
+      tag: "Edge AI Industrial",
+    },
+    {
+      icon: Bot,
+      image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80",
+      title: "Asistente Experto",
+      desc: "Consulta dudas sanitarias iniciales respaldado en parámetros veterinarios oficiales. Detecta síntomas de Newcastle, Gumboro o Bronquitis a partir de posturas anómalas y patrones de sonido.",
+      highlight: "Triaje 24/7 alineado a buenas prácticas avícolas.",
+      tag: "Criterio Sanitario Oficial",
+    },
+  ];
+
+  return (
+    <section id="solucion" className="py-20 md:py-28 relative bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Heading */}
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-mono font-bold uppercase">
+            <Zap className="w-3.5 h-3.5 text-emerald-600" />
+            Capacidades Centrales
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
+            Tecnología Diseñada para la Realidad del Campo
+          </h2>
+          <p className="text-slate-600 text-base sm:text-lg">
+            Combinamos visión artificial de alta precisión con la resiliencia operativa
+            que demanda la producción avícola en el sur del país.
+          </p>
+        </div>
+
+        {/* 3-Column Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {features.map((feat, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: idx * 0.15 }}
+              whileHover={{ y: -6 }}
+              className="rounded-3xl bg-white border border-slate-200 hover:border-emerald-300 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between group"
+            >
+              {/* Feature Preview Image */}
+              <div className="relative h-48 w-full bg-slate-100 overflow-hidden">
+                <Image
+                  src={feat.image}
+                  alt={feat.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 400px"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-4 left-4 z-10 w-11 h-11 rounded-xl bg-white/90 backdrop-blur-md border border-slate-200 flex items-center justify-center text-emerald-700 shadow-md">
+                  <feat.icon className="w-5 h-5" />
+                </div>
+                <div className="absolute top-4 right-4 z-10 text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-slate-900/80 text-white backdrop-blur-md">
+                  {feat.tag}
+                </div>
+              </div>
+
+              {/* Title & Description */}
+              <div className="p-6 sm:p-7 space-y-3 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors mb-2">
+                    {feat.title}
+                  </h3>
+                  <p className="text-slate-600 text-sm leading-relaxed">{feat.desc}</p>
+                </div>
+
+                {/* Bottom Highlight */}
+                <div className="mt-6 pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                  <span>{feat.highlight}</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ==========================================
+// 6. ECOSYSTEM & ALLIANCES (LIGHT SOCIAL PROOF)
+// ==========================================
+function EcosystemAndAlliances({ onOpenPilot }: { onOpenPilot: () => void }) {
+  return (
+    <section id="alianzas" className="py-20 md:py-28 relative bg-[#F4F8F5]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Banner Container */}
+        <div className="rounded-3xl bg-white border border-slate-200 p-8 sm:p-12 shadow-xl relative overflow-hidden">
+          <div className="max-w-3xl mb-12 space-y-3">
+            <span className="text-xs font-mono font-bold tracking-widest text-emerald-700 uppercase">
+              Ecosistema Regional & Respaldo Técnico
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Con el respaldo técnico de instituciones clave y proveedores verificados
+            </h2>
+            <p className="text-slate-600 text-base">
+              Articulamos la tecnología de visión artificial con los estándares oficiales
+              de sanidad animal y la cadena de suministro agropecuaria del sur peruano.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Stylized SENASA Ica Badge */}
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-red-600 to-red-800 text-white flex items-center justify-center font-black text-xl font-mono shadow-md">
+                  SENASA
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-slate-900">SENASA Ica</h3>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      Homologado
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Servicio Nacional de Sanidad Agraria — Región Ica
+                  </div>
+                </div>
+              </div>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Parámetros de vigilancia epidemiológica y triaje veterinario estructurados
+                bajo las directivas sanitarias aviares vigentes para el control de
+                enfermedades de notificación obligatoria.
               </p>
-              <div className="mt-2.5 flex flex-wrap gap-1.5 sm:gap-2">
-                {specialties.map((spec) => (
-                  <Link
-                    key={spec}
-                    href={`/veterinarias?service=${encodeURIComponent(spec)}`}
-                    className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-[var(--ink-soft)] transition hover:border-[var(--green)] hover:bg-emerald-50 hover:text-[var(--green-dark)]"
-                  >
-                    {spec}
-                  </Link>
-                ))}
+              <div className="pt-2 flex flex-wrap gap-2">
+                <span className="text-[11px] font-mono px-2.5 py-1 rounded bg-white text-slate-700 border border-slate-200">
+                  Directiva Sanitaria Aviar
+                </span>
+                <span className="text-[11px] font-mono px-2.5 py-1 rounded bg-white text-slate-700 border border-slate-200">
+                  Trazabilidad por Galpón
+                </span>
               </div>
             </div>
-          </section>
 
-          {/* ======================================================== */}
-          {/* 6. PARA CLÍNICAS VETERINARIAS (PROFESIONALES) */}
-          {/* ======================================================== */}
-          <section className="relative overflow-hidden rounded-2xl sm:rounded-[2rem] border border-slate-200 bg-white p-5 sm:p-10 lg:p-12 shadow-xs">
-            <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-              <div className="space-y-4 sm:space-y-5">
-                <span className="vet-kicker">Para profesionales veterinarios</span>
-
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[var(--ink)] leading-tight">
-                  Suma tu clínica a la red oficial de VetIA
-                </h2>
-
-                <p className="text-xs sm:text-base text-[var(--muted)] leading-relaxed">
-                  Únete al directorio regional verificado. Acredita tu RUC y colegiatura CMVP para recibir derivaciones de pacientes, responder consultas y gestionar solicitudes de cita en un panel formal.
-                </p>
-
-                <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-xl p-3 leading-relaxed">
-                  <strong>Aviso de seguridad:</strong> El envío de la solicitud de incorporación no concede acceso operativo inmediato ni publica la clínica. Cada solicitud requiere aportar documentos de personería y colegiatura, siendo verificada rigurosamente por un superadministrador antes de su aprobación, activación y publicación.
-                </p>
-
-                <div className="grid gap-2.5 sm:grid-cols-2 pt-1 text-xs">
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                    <p className="font-bold text-[var(--ink)]">Acreditación formal</p>
-                    <p className="text-[var(--muted)] mt-0.5">Validación de RUC en SUNAT y registro en el Colegio Médico Veterinario del Perú.</p>
-                  </div>
-                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                    <p className="font-bold text-[var(--ink)]">Panel privado de clínica</p>
-                    <p className="text-[var(--muted)] mt-0.5">Control de solicitudes de cita, clientes registrados e información pública tras ser activada.</p>
+            {/* B2B Verified Suppliers Card */}
+            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md">
+                  <Truck className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">
+                    Directorio B2B de Proveedores Verificados
+                  </h3>
+                  <div className="text-xs text-slate-500">
+                    Conexión Inteligente de Insumos & Alimento
                   </div>
                 </div>
+              </div>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                La IA proyecta el consumo de pienso de tu lote en tiempo real y conecta tu
+                galpón con distribuidores mayoristas de maíz, soya y núcleos de Chincha y
+                Pisco para asegurar precios directos y despacho oportuno.
+              </p>
+              <div className="pt-2 grid grid-cols-2 gap-2 text-[11px] font-mono text-slate-600">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                  <span>Molinos del Valle Chincha</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                  <span>AgroInsumos Ica Sur</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                  <span>NutriAves Perú</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                  <span>BioSeguridad Pisco</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
-                  <Link
-                    href="/account/clinic-applications"
-                    className="vet-button vet-button-primary !w-full sm:!w-auto text-xs sm:text-sm px-5 py-2.5"
+          {/* Regional Trust Bar */}
+          <div className="mt-10 pt-8 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4 text-xs font-mono text-slate-600">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>PROTOCOLO DE PRIVACIDAD: Datos de granja 100% confidenciales</span>
+            </div>
+            <button
+              onClick={onOpenPilot}
+              className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1 transition-colors"
+            >
+              <span>Conoce el programa de validación de granjas</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ==========================================
+// 7. FOOTER (CLEAN LIGHT & MINIMALIST)
+// ==========================================
+function Footer() {
+  return (
+    <footer className="border-t border-slate-200 bg-slate-50 text-slate-600 pt-16 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-slate-200">
+          {/* Brand Info */}
+          <div className="space-y-4 md:col-span-1">
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600 text-white">
+                <ScanEye className="w-4 h-4" />
+              </div>
+              <span className="text-lg font-black tracking-tight text-slate-900">
+                IAVET<span className="text-emerald-600 ml-1">AGRO</span>
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Tecnología diseñada para los productores de Ica y el Perú. Optimizamos la
+              rentabilidad avícola mediante visión computacional y modelos Edge AI.
+            </p>
+            <div className="text-xs font-mono text-emerald-700 font-bold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+              <span>Despliegues en Chincha, Pisco e Ica</span>
+            </div>
+          </div>
+
+          {/* Links: Plataforma */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900">
+              Plataforma
+            </h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a href="#simulador" className="hover:text-emerald-700 transition-colors">
+                  Visión Computacional
+                </a>
+              </li>
+              <li>
+                <a href="#simulador" className="hover:text-emerald-700 transition-colors">
+                  Conteo Automático
+                </a>
+              </li>
+              <li>
+                <a href="#solucion" className="hover:text-emerald-700 transition-colors">
+                  Detección de Estrés Térmico
+                </a>
+              </li>
+              <li>
+                <a href="#roi" className="hover:text-emerald-700 transition-colors">
+                  Calculadora de Retorno ROI
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Links: Alianzas & Cumplimiento */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900">
+              Ecosistema
+            </h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a href="#alianzas" className="hover:text-emerald-700 transition-colors">
+                  SENASA Ica
+                </a>
+              </li>
+              <li>
+                <a href="#alianzas" className="hover:text-emerald-700 transition-colors">
+                  Directorio de Proveedores
+                </a>
+              </li>
+              <li>
+                <Link href="/account/agro" className="hover:text-emerald-700 transition-colors">
+                  Panel de Productores
+                </Link>
+              </li>
+              <li>
+                <Link href="/veterinarias" className="hover:text-emerald-700 transition-colors">
+                  Directorio Clínico VetIA
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contacto B2B */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-900">
+              Contacto B2B
+            </h4>
+            <ul className="space-y-2 text-sm text-slate-600">
+              <li className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Panamericana Sur Km 300, Ica, Perú</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <PhoneCall className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>+51 (056) 632-180 / +51 956 718 200</span>
+              </li>
+              <li className="text-xs text-slate-500 pt-1 font-mono">
+                Atención técnica a granjas: Lun-Sáb 06:00 - 18:00
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom copyright */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <div>
+            © 2026 IAVET Agro Technologies S.A.C. Todos los derechos reservados.
+          </div>
+          <div className="flex items-center gap-6">
+            <Link href="/terms" className="hover:text-slate-800">
+              Términos del Piloto
+            </Link>
+            <Link href="/privacy" className="hover:text-slate-800">
+              Privacidad y Telemetría
+            </Link>
+            <Link href="/auth/login" className="text-emerald-700 hover:text-emerald-800 font-bold">
+              Acceso a Granjas
+            </Link>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ==========================================
+// 8. PILOT REGISTRATION MODAL
+// ==========================================
+function PilotModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    farmLocation: "Chincha",
+    birdCount: "25000",
+    phone: "",
+  });
+
+  const producerNameId = useId();
+  const farmLocationId = useId();
+  const birdCapacityId = useId();
+  const phoneId = useId();
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="w-full max-w-lg rounded-3xl bg-white border border-slate-200 p-6 sm:p-8 shadow-2xl relative"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 p-2 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {submitted ? (
+          <div className="text-center py-8 space-y-4">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900">¡Solicitud de Piloto Recibida!</h3>
+            <p className="text-slate-600 text-sm max-w-sm mx-auto">
+              Un especialista técnico en avicultura de IAVET Agro se comunicará contigo en menos
+              de 24 horas para coordinar la inspección del galpón en {formData.farmLocation}.
+            </p>
+            <button
+              onClick={() => {
+                setSubmitted(false);
+                onClose();
+              }}
+              className="mt-4 px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-md"
+            >
+              Entendido
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-700 uppercase font-bold">
+                <Sparkles className="w-3.5 h-3.5" />
+                Programa Piloto Sin Costo
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900">Inicia tu Piloto en Galpón</h3>
+              <p className="text-slate-500 text-xs">
+                Instalación de 1 cámara de visión artificial de prueba por 14 días en tu granja.
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <div>
+                <label htmlFor={producerNameId} className="block text-xs font-semibold text-slate-700 mb-1">
+                  Nombre del Productor o Empresa
+                </label>
+                <input
+                  id={producerNameId}
+                  required
+                  type="text"
+                  placeholder="Ej. Granjas Avícolas del Sur S.A.C."
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:border-emerald-600 focus:bg-white outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor={farmLocationId} className="block text-xs font-semibold text-slate-700 mb-1">
+                    Ubicación de Granja
+                  </label>
+                  <select
+                    id={farmLocationId}
+                    value={formData.farmLocation}
+                    onChange={(e) => setFormData({ ...formData, farmLocation: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:border-emerald-600 focus:bg-white outline-none"
                   >
-                    Solicitar incorporación de mi clínica
-                  </Link>
-                  <Link
-                    href="/clinic"
-                    className="vet-button vet-button-secondary !w-full sm:!w-auto text-xs sm:text-sm px-5 py-2.5"
-                  >
-                    Acceder al panel de clínica
-                  </Link>
+                    <option value="Chincha">Chincha</option>
+                    <option value="Pisco">Pisco</option>
+                    <option value="Ica">Valle de Ica</option>
+                    <option value="Nazca">Palpa / Nazca</option>
+                    <option value="Otro">Otra provincia</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor={birdCapacityId} className="block text-xs font-semibold text-slate-700 mb-1">
+                    Capacidad (Aves)
+                  </label>
+                  <input
+                    id={birdCapacityId}
+                    type="number"
+                    value={formData.birdCount}
+                    onChange={(e) => setFormData({ ...formData, birdCount: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:border-emerald-600 focus:bg-white outline-none"
+                  />
                 </div>
               </div>
 
-              <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 shadow-xs aspect-[16/10] sm:aspect-[4/3]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?auto=format&fit=crop&w=800&q=80"
-                  alt="Instalaciones de consultorio veterinario profesional"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
+              <div>
+                <label htmlFor={phoneId} className="block text-xs font-semibold text-slate-700 mb-1">
+                  Teléfono / WhatsApp de Contacto
+                </label>
+                <input
+                  id={phoneId}
+                  required
+                  type="tel"
+                  placeholder="+51 987 654 321"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:border-emerald-600 focus:bg-white outline-none"
                 />
               </div>
             </div>
-          </section>
 
-          {/* ======================================================== */}
-          {/* 7. PREGUNTAS FRECUENTES (FAQ) */}
-          {/* ======================================================== */}
-          <section id="faq" aria-labelledby="faq-title" className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
-            <div className="text-center space-y-1.5">
-              <p className="vet-eyebrow">Preguntas frecuentes</p>
-              <h2 id="faq-title" className="vet-section-title">
-                Claridad y transparencia ante todo
-              </h2>
-              <p className="vet-muted text-xs sm:text-sm">
-                Todo lo que necesitas saber sobre el asistente IA y el directorio de VetIA.
-              </p>
-            </div>
+            <button
+              type="submit"
+              className="w-full mt-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md shadow-emerald-600/20 transition-all"
+            >
+              Confirmar Solicitud de Piloto
+            </button>
+          </form>
+        )}
+      </motion.div>
+    </div>
+  );
+}
 
-            <div className="space-y-2.5 pt-2">
-              {questions.map(([question, answer]) => (
-                <details
-                  key={question}
-                  className="group rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs transition hover:border-slate-300 open:bg-[#fbfdfc]"
-                >
-                  <summary className="flex cursor-pointer items-center justify-between font-bold text-[var(--ink)] text-xs sm:text-base">
-                    <span>{question}</span>
-                    <span className="ml-2 text-base sm:text-lg text-[var(--green)] font-mono transition-transform group-open:rotate-45">+</span>
-                  </summary>
-                  <p className="vet-muted mt-2.5 text-xs sm:text-sm leading-relaxed border-t border-slate-100 pt-2.5">
-                    {answer}
-                  </p>
-                </details>
-              ))}
-            </div>
-          </section>
+// ==========================================
+// MAIN LANDING PAGE CONTAINER (LIGHT MODE)
+// ==========================================
+export default function LandingPage() {
+  const [pilotModalOpen, setPilotModalOpen] = useState(false);
 
-          {/* ======================================================== */}
-          {/* 8. CTA FINAL CONTEXTUAL */}
-          {/* ======================================================== */}
-          <section className="rounded-2xl sm:rounded-[2.25rem] bg-gradient-to-br from-[#0a4536] via-[#12634d] to-[#0d503f] p-6 sm:p-12 text-center text-white shadow-xl">
-            <div className="mx-auto max-w-2xl space-y-4 sm:space-y-5">
-              <span className="inline-block text-3xl">🐾</span>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white">
-                Empieza hoy una conversación por el bienestar de tu mascota
-              </h2>
-              <p className="text-emerald-100/90 text-xs sm:text-base leading-relaxed">
-                Resuelve dudas iniciales con el asistente de inteligencia artificial o encuentra atención veterinaria formal en Chincha, Pisco e Ica.
-              </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-                <Link
-                  href="/asistente"
-                  className="rounded-xl bg-white px-6 py-3.5 text-xs sm:text-sm font-bold text-[var(--green-dark)] shadow-md transition hover:bg-emerald-50 active:scale-95 flex items-center justify-center gap-2"
-                >
-                  <span>✦</span>
-                  <span>Hablar con VetIA IA</span>
-                </Link>
-                <Link
-                  href="/veterinarias"
-                  className="rounded-xl border border-white/40 bg-white/10 px-6 py-3.5 text-xs sm:text-sm font-bold text-white transition hover:bg-white/20 active:scale-95"
-                >
-                  Buscar veterinarias
-                </Link>
-              </div>
-            </div>
-          </section>
-
-        </div>
+  return (
+    <div className="min-h-screen bg-[#F8FAF7] text-slate-900 selection:bg-emerald-100 selection:text-emerald-900 antialiased font-sans">
+      <Navbar onOpenPilot={() => setPilotModalOpen(true)} />
+      <main>
+        <HeroSection onOpenPilot={() => setPilotModalOpen(true)} />
+        <ComputerVisionSimulator />
+        <ProfitabilityCalculator onOpenPilot={() => setPilotModalOpen(true)} />
+        <KeyFeatures />
+        <EcosystemAndAlliances onOpenPilot={() => setPilotModalOpen(true)} />
       </main>
-
-      <SiteFooter />
-    </>
+      <Footer />
+      <PilotModal isOpen={pilotModalOpen} onClose={() => setPilotModalOpen(false)} />
+    </div>
   );
 }

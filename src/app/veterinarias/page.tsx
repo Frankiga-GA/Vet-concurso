@@ -71,16 +71,6 @@ export default async function DirectoryPage({
               Todos los servicios
             </Link>
             <Link
-              href={directoryUrl(city, "consulta")}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                service.toLowerCase().includes("consulta")
-                  ? "bg-[var(--green)] text-white"
-                  : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-              }`}
-            >
-              🐾 Mascotas (Menores)
-            </Link>
-            <Link
               href={directoryUrl(city, "producción")}
               className={`rounded-full px-3 py-1 text-xs font-semibold transition flex items-center gap-1 ${
                 service.toLowerCase().includes("producción") || service.toLowerCase().includes("ganad")
@@ -88,8 +78,17 @@ export default async function DirectoryPage({
                   : "bg-emerald-100/70 text-emerald-900 border border-emerald-300 hover:bg-emerald-200"
               }`}
             >
-              <span>🌾</span>
-              <span>Animales de Producción (Agro)</span>
+              <span>Sanidad Aviar y Pecuaria (Agro)</span>
+            </Link>
+            <Link
+              href={directoryUrl(city, "diagnóstico")}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                service.toLowerCase().includes("diagnóstico")
+                  ? "bg-[var(--green)] text-white"
+                  : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+              }`}
+            >
+              Diagnóstico Clínico de Campo
             </Link>
           </div>
 
@@ -193,7 +192,7 @@ async function DirectoryResults({
                   <div className="flex items-center gap-1.5">
                     {servesProduction && (
                       <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 border border-emerald-300">
-                        🌾 Producción
+                        Producción
                       </span>
                     )}
                     <span className="vet-badge">{clinic.city}</span>

@@ -18,15 +18,16 @@ export function AuthForm({ title, description, action, submitLabel, children, he
         <aside className="vet-auth-aside">
           <Brand light />
           <div>
-            <p className="text-sm font-bold uppercase tracking-[.14em] text-emerald-200">Tu espacio VetIA</p>
-            <h2 className="mt-3 text-3xl font-bold leading-tight">El cuidado de tus mascotas, mejor organizado.</h2>
+            <p className="text-sm font-bold uppercase tracking-[.14em] text-emerald-200">Plataforma IAVET Agro</p>
+            <h2 className="mt-3 text-3xl font-bold leading-tight">Inteligencia Artificial y Visión Móvil para Galpones.</h2>
             <ul className="mt-6 grid gap-3 text-sm text-emerald-50/85">
-              <li>✓ Guarda las fichas de tus mascotas</li>
-              <li>✓ Encuentra veterinarias verificadas</li>
-              <li>✓ Gestiona tu establecimiento de forma segura</li>
+              <li>✓ Censo y conteo de aves con la cámara del celular</li>
+              <li>✓ Detección temprana de patologías y estrés térmico</li>
+              <li>✓ Control de lotes pecuarios y parámetros SENASA</li>
+              <li>✓ Directorio B2B de proveedores verificado en Ica</li>
             </ul>
           </div>
-          <p className="text-xs text-emerald-100/75">VetIA · Cuidado que conecta</p>
+          <p className="text-xs text-emerald-100/75">IAVET Agro · Tecnología para los productores del Perú</p>
         </aside>
         <div className="vet-auth-card space-y-6">
           <div className="md:hidden"><Brand /></div>
